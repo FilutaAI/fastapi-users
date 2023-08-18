@@ -2,19 +2,23 @@ from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from fastapi.security import OAuth2PasswordRequestForm
 
 from filuta_fastapi_users import models
-from filuta_fastapi_users.authentication import AuthenticationBackend, Authenticator, Strategy
-from filuta_fastapi_users.authentication.strategy.db.models import AP, RTP
+from filuta_fastapi_users.authentication import (
+    AuthenticationBackend,
+    Authenticator,
+    RefreshTokenManager,
+    RefreshTokenManagerDependency,
+    Strategy,
+)
 from filuta_fastapi_users.manager import BaseUserManager, UserManagerDependency
 from filuta_fastapi_users.openapi import OpenAPIResponseType
-from filuta_fastapi_users.refresh_token.refresh_token_manager import RefreshTokenManager, RefreshTokenManagerDependency
 from filuta_fastapi_users.router.common import ErrorCode, ErrorModel
 
 
 def get_auth_router(
-    backend: AuthenticationBackend[models.UP, models.ID, AP],
+    backend: AuthenticationBackend[models.UP, models.ID, models.AP],
     get_user_manager: UserManagerDependency[models.UP, models.ID],
-    authenticator: Authenticator[models.UP, models.ID, AP],
-    get_refresh_token_manager: RefreshTokenManagerDependency[RTP],
+    authenticator: Authenticator[models.UP, models.ID, models.AP],
+    get_refresh_token_manager: RefreshTokenManagerDependency[models.RTP],
     requires_verification: bool = False,
 ) -> APIRouter:
     """Generate a router with login/logout routes for an authentication backend."""
@@ -50,7 +54,7 @@ def get_auth_router(
         request: Request,
         credentials: OAuth2PasswordRequestForm = Depends(),
         user_manager: BaseUserManager[models.UP, models.ID] = Depends(get_user_manager),
-        strategy: Strategy[models.UP, models.ID, AP] = Depends(backend.get_strategy),
+        strategy: Strategy[models.UP, models.ID, models.AP] = Depends(backend.get_strategy),
     ) -> Response:
         user = await user_manager.authenticate(credentials)
 
@@ -87,8 +91,8 @@ def get_auth_router(
         request: Request,
         credentials: OAuth2PasswordRequestForm = Depends(),
         user_manager: BaseUserManager[models.UP, models.ID] = Depends(get_user_manager),
-        strategy: Strategy[models.UP, models.ID, AP] = Depends(backend.get_strategy),
-        refresh_token_manager: RefreshTokenManager[RTP] = Depends(get_refresh_token_manager),
+        strategy: Strategy[models.UP, models.ID, models.AP] = Depends(backend.get_strategy),
+        refresh_token_manager: RefreshTokenManager[models.RTP] = Depends(get_refresh_token_manager),
     ) -> None:
         pass
 
@@ -99,7 +103,7 @@ def get_auth_router(
     @router.post("/logout", name=f"auth:{backend.name}.logout", responses=logout_responses)
     async def logout(
         user_token: tuple[models.UP, str] = Depends(get_current_user_token),
-        strategy: Strategy[models.UP, models.ID, AP] = Depends(backend.get_strategy),
+        strategy: Strategy[models.UP, models.ID, models.AP] = Depends(backend.get_strategy),
     ) -> Response:
         user, token = user_token
         return await backend.logout(strategy, user, token)

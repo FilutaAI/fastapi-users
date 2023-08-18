@@ -5,13 +5,13 @@ from sqlalchemy import String, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Mapped, mapped_column
 
-from filuta_fastapi_users.authentication.strategy.db import OTPTP, OtpTokenDatabase
-from filuta_fastapi_users.models import ID
+from filuta_fastapi_users import models
+from filuta_fastapi_users.authentication import OtpTokenDatabase
 
 from .generics import TIMESTAMPAware, now_utc
 
 
-class SQLAlchemyBaseOtpTokenTable(Generic[ID]):
+class SQLAlchemyBaseOtpTokenTable(Generic[models.ID]):
     """Base SQLAlchemy access token table definition."""
 
     __tablename__ = "otp_tokens"
@@ -34,7 +34,7 @@ class SQLAlchemyBaseOtpTokenTable(Generic[ID]):
         )
 
 
-class SQLAlchemyOtpTokenDatabase(Generic[OTPTP], OtpTokenDatabase[OTPTP]):
+class SQLAlchemyOtpTokenDatabase(Generic[models.OTPTP], OtpTokenDatabase[models.OTPTP]):
     """
     OTP token database adapter for SQLAlchemy.
 
@@ -45,12 +45,12 @@ class SQLAlchemyOtpTokenDatabase(Generic[OTPTP], OtpTokenDatabase[OTPTP]):
     def __init__(
         self,
         session: AsyncSession,
-        otp_token_table: type[OTPTP],
+        otp_token_table: type[models.OTPTP],
     ):
         self.session = session
         self.otp_token_table = otp_token_table
 
-    async def get_by_access_token(self, access_token: str, max_age: datetime | None = None) -> OTPTP | None:
+    async def get_by_access_token(self, access_token: str, max_age: datetime | None = None) -> models.OTPTP | None:
         statement = select(self.otp_token_table).where(self.otp_token_table.access_token == access_token)
         if max_age is not None:
             statement = statement.where(self.otp_token_table.created_at >= max_age)
@@ -60,7 +60,7 @@ class SQLAlchemyOtpTokenDatabase(Generic[OTPTP], OtpTokenDatabase[OTPTP]):
 
     async def find_otp_token(
         self, access_token: str, mfa_type: str, mfa_token: str, only_valid: bool = False
-    ) -> OTPTP | None:
+    ) -> models.OTPTP | None:
         statement = (
             select(self.otp_token_table)
             .where(self.otp_token_table.access_token == access_token)
@@ -75,7 +75,7 @@ class SQLAlchemyOtpTokenDatabase(Generic[OTPTP], OtpTokenDatabase[OTPTP]):
         results = await self.session.execute(statement)
         return results.scalar_one_or_none()
 
-    async def user_has_token(self, access_token: str, mfa_type: str) -> OTPTP | None:
+    async def user_has_token(self, access_token: str, mfa_type: str) -> models.OTPTP | None:
         statement = (
             select(self.otp_token_table)
             .where(self.otp_token_table.access_token == access_token)
@@ -85,14 +85,14 @@ class SQLAlchemyOtpTokenDatabase(Generic[OTPTP], OtpTokenDatabase[OTPTP]):
         results = await self.session.execute(statement)
         return results.scalar_one_or_none()
 
-    async def create(self, create_dict: dict[str, Any]) -> OTPTP:
+    async def create(self, create_dict: dict[str, Any]) -> models.OTPTP:
         otp_token = self.otp_token_table(**create_dict)
         self.session.add(otp_token)
         await self.session.commit()
         await self.session.refresh(otp_token)
         return otp_token
 
-    async def update(self, otp_token: OTPTP, update_dict: dict[str, Any]) -> OTPTP:
+    async def update(self, otp_token: models.OTPTP, update_dict: dict[str, Any]) -> models.OTPTP:
         for key, value in update_dict.items():
             setattr(otp_token, key, value)
         self.session.add(otp_token)
@@ -100,6 +100,6 @@ class SQLAlchemyOtpTokenDatabase(Generic[OTPTP], OtpTokenDatabase[OTPTP]):
         await self.session.refresh(otp_token)
         return otp_token
 
-    async def delete(self, otp_token: OTPTP) -> None:
+    async def delete(self, otp_token: models.OTPTP) -> None:
         await self.session.delete(otp_token)
         await self.session.commit()

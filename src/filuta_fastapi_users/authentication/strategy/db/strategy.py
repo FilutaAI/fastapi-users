@@ -5,12 +5,11 @@ from typing import Any, Generic
 from filuta_fastapi_users import exceptions, models
 from filuta_fastapi_users.authentication.strategy.base import Strategy
 from filuta_fastapi_users.authentication.strategy.db.adapter import AccessTokenDatabase
-from filuta_fastapi_users.authentication.strategy.db.models import AP
 from filuta_fastapi_users.manager import BaseUserManager
 
 
-class DatabaseStrategy(Strategy[models.UP, models.ID, AP], Generic[models.UP, models.ID, AP]):
-    def __init__(self, access_token_db: AccessTokenDatabase[AP], lifetime_seconds: int | None = None):
+class DatabaseStrategy(Strategy[models.UP, models.ID, models.AP], Generic[models.UP, models.ID, models.AP]):
+    def __init__(self, access_token_db: AccessTokenDatabase[models.AP], lifetime_seconds: int | None = None):
         self.access_token_db = access_token_db
         self.lifetime_seconds = lifetime_seconds
 
@@ -34,7 +33,7 @@ class DatabaseStrategy(Strategy[models.UP, models.ID, AP], Generic[models.UP, mo
         except (exceptions.UserNotExists, exceptions.InvalidID):
             return None
 
-    async def get_token_record(self, token: str | None) -> AP | None:
+    async def get_token_record(self, token: str | None) -> models.AP | None:
         if token is None:
             return None
 
@@ -45,12 +44,12 @@ class DatabaseStrategy(Strategy[models.UP, models.ID, AP], Generic[models.UP, mo
         access_token = await self.access_token_db.get_by_token(token, max_age)
         return access_token
 
-    async def write_token(self, user: models.UP) -> AP:
+    async def write_token(self, user: models.UP) -> models.AP:
         access_token_dict = self._create_access_token_dict(user)
         access_token = await self.access_token_db.create(access_token_dict)
         return access_token
 
-    async def update_token(self, access_token: AP, data: dict[str, Any]) -> AP:
+    async def update_token(self, access_token: models.AP, data: dict[str, Any]) -> models.AP:
         access_token = await self.access_token_db.update(access_token=access_token, update_dict=data)
         return access_token
 

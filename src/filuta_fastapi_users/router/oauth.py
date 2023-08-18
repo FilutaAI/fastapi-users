@@ -8,7 +8,6 @@ from pydantic import BaseModel
 
 from filuta_fastapi_users import models, schemas
 from filuta_fastapi_users.authentication import AuthenticationBackend, Authenticator, Strategy
-from filuta_fastapi_users.authentication.strategy.db.models import AP
 from filuta_fastapi_users.exceptions import UserAlreadyExists
 from filuta_fastapi_users.jwt import SecretType, decode_jwt, generate_jwt
 from filuta_fastapi_users.manager import BaseUserManager, UserManagerDependency
@@ -28,7 +27,7 @@ def generate_state_token(data: dict[str, str], secret: SecretType, lifetime_seco
 
 def get_oauth_router(
     oauth_client: BaseOAuth2[dict[str, Any]],
-    backend: AuthenticationBackend[models.UP, models.ID, AP],
+    backend: AuthenticationBackend[models.UP, models.ID, models.AP],
     get_user_manager: UserManagerDependency[models.UP, models.ID],
     state_secret: SecretType,
     redirect_url: str | None = None,
@@ -99,7 +98,7 @@ def get_oauth_router(
         request: Request,
         access_token_state: tuple[OAuth2Token, str] = Depends(oauth2_authorize_callback),
         user_manager: BaseUserManager[models.UP, models.ID] = Depends(get_user_manager),
-        strategy: Strategy[models.UP, models.ID, AP] = Depends(backend.get_strategy),
+        strategy: Strategy[models.UP, models.ID, models.AP] = Depends(backend.get_strategy),
     ) -> Response:
         token, state = access_token_state
         account_id, account_email = await oauth_client.get_id_email(token["access_token"])
@@ -149,7 +148,7 @@ def get_oauth_router(
 
 def get_oauth_associate_router(
     oauth_client: BaseOAuth2[dict[str, Any]],
-    authenticator: Authenticator[models.UP, models.ID, AP],
+    authenticator: Authenticator[models.UP, models.ID, models.AP],
     get_user_manager: UserManagerDependency[models.UP, models.ID],
     user_schema: type[schemas.U],
     state_secret: SecretType,

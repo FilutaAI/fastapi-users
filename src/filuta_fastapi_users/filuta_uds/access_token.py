@@ -6,13 +6,13 @@ from sqlalchemy import JSON, ForeignKey, String, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Mapped, declared_attr, mapped_column
 
-from filuta_fastapi_users.authentication.strategy.db import AP, AccessTokenDatabase
-from filuta_fastapi_users.models import ID
+from filuta_fastapi_users import models
+from filuta_fastapi_users.authentication import AccessTokenDatabase
 
 from .generics import GUID, TIMESTAMPAware, now_utc
 
 
-class SQLAlchemyBaseAccessTokenTable(Generic[ID]):
+class SQLAlchemyBaseAccessTokenTable(Generic[models.ID]):
     """Base SQLAlchemy access token table definition."""
 
     __tablename__ = "access_tokens"
@@ -22,7 +22,7 @@ class SQLAlchemyBaseAccessTokenTable(Generic[ID]):
         created_at: datetime
         scopes: str
         mfa_scopes: dict[str, int]
-        user_id: ID
+        user_id: models.ID
     else:
         token = mapped_column(String(length=43), primary_key=True)
         scopes = mapped_column(String(length=255))
@@ -40,7 +40,7 @@ class SQLAlchemyBaseAccessTokenTableUUID(SQLAlchemyBaseAccessTokenTable[uuid.UUI
             return mapped_column(GUID, ForeignKey("user.id", ondelete="cascade"), nullable=False)
 
 
-class SQLAlchemyAccessTokenDatabase(Generic[AP], AccessTokenDatabase[AP]):
+class SQLAlchemyAccessTokenDatabase(Generic[models.AP], AccessTokenDatabase[models.AP]):
     """
     Access token database adapter for SQLAlchemy.
 
@@ -51,12 +51,14 @@ class SQLAlchemyAccessTokenDatabase(Generic[AP], AccessTokenDatabase[AP]):
     def __init__(
         self,
         session: AsyncSession,
-        access_token_table: type[AP],
+        access_token_table: type[models.AP],
     ):
         self.session = session
         self.access_token_table = access_token_table
 
-    async def get_by_token(self, token: str, max_age: datetime | None = None, authorized: bool = False) -> AP | None:
+    async def get_by_token(
+        self, token: str, max_age: datetime | None = None, authorized: bool = False
+    ) -> models.AP | None:
         statement = select(self.access_token_table).where(self.access_token_table.token == token)
         if max_age is not None:
             statement = statement.where(self.access_token_table.created_at >= max_age)
@@ -67,14 +69,14 @@ class SQLAlchemyAccessTokenDatabase(Generic[AP], AccessTokenDatabase[AP]):
         results = await self.session.execute(statement)
         return results.scalar_one_or_none()
 
-    async def create(self, create_dict: dict[str, Any]) -> AP:
+    async def create(self, create_dict: dict[str, Any]) -> models.AP:
         access_token = self.access_token_table(**create_dict)
         self.session.add(access_token)
         await self.session.commit()
         await self.session.refresh(access_token)
         return access_token
 
-    async def update(self, access_token: AP, update_dict: dict[str, Any]) -> AP:
+    async def update(self, access_token: models.AP, update_dict: dict[str, Any]) -> models.AP:
         for key, value in update_dict.items():
             setattr(access_token, key, value)
 
@@ -84,6 +86,6 @@ class SQLAlchemyAccessTokenDatabase(Generic[AP], AccessTokenDatabase[AP]):
         await self.session.refresh(access_token)
         return access_token
 
-    async def delete(self, access_token: AP) -> None:
+    async def delete(self, access_token: models.AP) -> None:
         await self.session.delete(access_token)
         await self.session.commit()

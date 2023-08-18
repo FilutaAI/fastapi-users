@@ -1,5 +1,5 @@
 import copy
-from typing import Generic
+from typing import Any
 
 from fastapi import APIRouter, Depends, Request
 from pydantic import BaseModel
@@ -7,22 +7,21 @@ from pydantic import BaseModel
 from filuta_fastapi_users import models
 from filuta_fastapi_users.authentication import AuthenticationBackend, Authenticator, Strategy
 from filuta_fastapi_users.authentication.mfa.otp_manager import OtpManager, OtpManagerDependency
-from filuta_fastapi_users.authentication.strategy.db.models import AP, OTPTP
 from filuta_fastapi_users.manager import BaseUserManager, UserManagerDependency
 
 
-class OtpResponse(BaseModel, Generic[AP]):
+class OtpResponse(BaseModel):
     status: bool
     message: str | None
     error: str | None
-    access_token: AP | None
+    access_token: Any | None
 
 
 def get_otp_router(  # noqa: C901
-    backend: AuthenticationBackend[models.UP, models.ID, AP],
+    backend: AuthenticationBackend[models.UP, models.ID, models.AP],
     get_user_manager: UserManagerDependency[models.UP, models.ID],
-    authenticator: Authenticator[models.UP, models.ID, AP],
-    get_otp_manager: OtpManagerDependency[OTPTP],
+    authenticator: Authenticator[models.UP, models.ID, models.AP],
+    get_otp_manager: OtpManagerDependency[models.OTPTP],
     requires_verification: bool = False,
 ) -> APIRouter:
     """Generate a router with login/logout routes for an authentication backend."""
@@ -44,9 +43,9 @@ def get_otp_router(  # noqa: C901
         request: Request,
         user_token: tuple[models.UP, str] = Depends(get_current_user_token),
         user_manager: BaseUserManager[models.UP, models.ID] = Depends(get_user_manager),
-        otp_manager: OtpManager[OTPTP] = Depends(get_otp_manager),
-        strategy: Strategy[models.UP, models.ID, AP] = Depends(backend.get_strategy),
-    ) -> OtpResponse[AP]:
+        otp_manager: OtpManager[models.OTPTP] = Depends(get_otp_manager),
+        strategy: Strategy[models.UP, models.ID, models.AP] = Depends(backend.get_strategy),
+    ) -> OtpResponse:
         user, token = user_token
 
         query_params = request.query_params
@@ -99,9 +98,9 @@ def get_otp_router(  # noqa: C901
         jsonBody: ValidateOtpTokenRequestBody,
         user_token: tuple[models.UP, str] = Depends(get_current_user_token),
         user_manager: BaseUserManager[models.UP, models.ID] = Depends(get_user_manager),
-        otp_manager: OtpManager[OTPTP] = Depends(get_otp_manager),
-        strategy: Strategy[models.UP, models.ID, AP] = Depends(backend.get_strategy),
-    ) -> OtpResponse[AP]:
+        otp_manager: OtpManager[models.OTPTP] = Depends(get_otp_manager),
+        strategy: Strategy[models.UP, models.ID, models.AP] = Depends(backend.get_strategy),
+    ) -> OtpResponse:
         user, token = user_token
         mfa_token = jsonBody.code
         mfa_type = jsonBody.type

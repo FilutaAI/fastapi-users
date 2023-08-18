@@ -3,7 +3,7 @@ from fastapi.responses import JSONResponse
 from fastapi.security import OAuth2PasswordBearer
 from pydantic import BaseModel
 
-from filuta_fastapi_users.authentication.strategy.db.models import AP
+from filuta_fastapi_users import models
 from filuta_fastapi_users.authentication.transport.base import (
     Transport,
     TransportLogoutNotSupportedError,
@@ -25,7 +25,7 @@ class BearerTransport(Transport):
     def __init__(self, tokenUrl: str):
         self.scheme = OAuth2PasswordBearer(tokenUrl, auto_error=False)
 
-    async def get_login_response(self, record: AP) -> Response:
+    async def get_login_response(self, record: models.AP) -> Response:
         bearer_response = BearerResponse(
             access_token=record.token,
             token_type="bearer",

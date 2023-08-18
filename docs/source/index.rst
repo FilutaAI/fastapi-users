@@ -1,8 +1,8 @@
 .. automodule:: filuta_fastapi_users
 
-======================================
+=========================================
 Project *filuta_fastapi_users*, Filuta.ai
-======================================
+=========================================
 
 Table of content:
 
@@ -57,14 +57,6 @@ Python example (don't forget an empty line to start a code block):
 
     def my_special_sum(a: int, b: int) -> int:
         return a + b
-
-Docstring tests work in sphinx! It's easy:
-
-.. doctest:: python
-
-    >>> from filuta_fastapi_users import main
-    >>> main.my_special_sum(4, 9)
-    13
 
 You can use references, for example to :ref:`submodule`
 

@@ -2,7 +2,6 @@ from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 
 from filuta_fastapi_users import exceptions, models, schemas
 from filuta_fastapi_users.authentication import Authenticator
-from filuta_fastapi_users.authentication.strategy.db.models import AP
 from filuta_fastapi_users.manager import BaseUserManager, UserManagerDependency
 from filuta_fastapi_users.router.common import ErrorCode, ErrorModel
 
@@ -11,7 +10,7 @@ def get_users_router(  # noqa: C901
     get_user_manager: UserManagerDependency[models.UP, models.ID],
     user_schema: type[schemas.U],
     user_update_schema: type[schemas.UU],
-    authenticator: Authenticator[models.UP, models.ID, AP],
+    authenticator: Authenticator[models.UP, models.ID, models.AP],
     requires_verification: bool = False,
 ) -> APIRouter:
     """Generate a router with the authentication routes."""

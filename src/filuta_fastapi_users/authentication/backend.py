@@ -3,19 +3,18 @@ from typing import Generic
 from fastapi import Response, status
 
 from filuta_fastapi_users import models
-from filuta_fastapi_users.authentication.strategy import (
+from filuta_fastapi_users.authentication.strategy.base import (
     Strategy,
     StrategyDestroyNotSupportedError,
 )
-from filuta_fastapi_users.authentication.strategy.db.models import AP
-from filuta_fastapi_users.authentication.transport import (
+from filuta_fastapi_users.authentication.transport.base import (
     Transport,
     TransportLogoutNotSupportedError,
 )
 from filuta_fastapi_users.types import DependencyCallable
 
 
-class AuthenticationBackend(Generic[models.UP, models.ID, AP]):
+class AuthenticationBackend(Generic[models.UP, models.ID, models.AP]):
     """
     Combination of an authentication transport and strategy.
 
@@ -34,7 +33,7 @@ class AuthenticationBackend(Generic[models.UP, models.ID, AP]):
         self,
         name: str,
         transport: Transport,
-        get_strategy: DependencyCallable[Strategy[models.UP, models.ID, AP]],
+        get_strategy: DependencyCallable[Strategy[models.UP, models.ID, models.AP]],
     ) -> None:
         self.name = name
         self.transport = transport
@@ -45,13 +44,15 @@ class AuthenticationBackend(Generic[models.UP, models.ID, AP]):
 
     async def login(
         self,
-        strategy: Strategy[models.UP, models.ID, AP],
+        strategy: Strategy[models.UP, models.ID, models.AP],
         user: models.UP,
     ) -> Response:
         record = await strategy.write_token(user)
         return await self.transport.get_login_response(record)
 
-    async def logout(self, strategy: Strategy[models.UP, models.ID, AP], user: models.UP, token: str) -> Response:
+    async def logout(
+        self, strategy: Strategy[models.UP, models.ID, models.AP], user: models.UP, token: str
+    ) -> Response:
         try:
             await strategy.destroy_token(token, user)
         except StrategyDestroyNotSupportedError:

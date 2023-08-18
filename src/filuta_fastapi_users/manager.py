@@ -6,7 +6,6 @@ from fastapi import Request, Response
 from fastapi.security import OAuth2PasswordRequestForm
 
 from filuta_fastapi_users import exceptions, models, schemas
-from filuta_fastapi_users.authentication.strategy.db.models import AP, OTPTP
 from filuta_fastapi_users.db import BaseUserDatabase
 from filuta_fastapi_users.jwt import SecretType, decode_jwt, generate_jwt
 from filuta_fastapi_users.password import PasswordHelper, PasswordHelperProtocol
@@ -482,7 +481,7 @@ class BaseUserManager(Generic[models.UP, models.ID]):
         return  # pragma: no cover
 
     async def on_after_otp_email_created(
-        self, user: models.UP, access_token_record: AP | None, otp_token_record: OTPTP
+        self, user: models.UP, access_token_record: models.AP | None, otp_token_record: models.OTPTP
     ) -> None:
         pass
 

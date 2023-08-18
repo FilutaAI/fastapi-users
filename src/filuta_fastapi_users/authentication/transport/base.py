@@ -3,7 +3,7 @@ from typing import Protocol
 from fastapi import Response
 from fastapi.security.base import SecurityBase
 
-from filuta_fastapi_users.authentication.strategy.db.models import AP
+from filuta_fastapi_users import models
 from filuta_fastapi_users.openapi import OpenAPIResponseType
 
 
@@ -14,7 +14,7 @@ class TransportLogoutNotSupportedError(Exception):
 class Transport(Protocol):
     scheme: SecurityBase
 
-    async def get_login_response(self, token: AP) -> Response:
+    async def get_login_response(self, token: models.AP) -> Response:
         ...  # pragma: no cover
 
     async def get_logout_response(self) -> Response:

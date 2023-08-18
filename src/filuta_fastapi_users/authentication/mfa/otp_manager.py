@@ -2,15 +2,15 @@ import secrets
 from datetime import datetime, timedelta
 from typing import Generic
 
+from filuta_fastapi_users import models
 from filuta_fastapi_users.authentication.strategy.db.adapter import OtpTokenDatabase
-from filuta_fastapi_users.authentication.strategy.db.models import OTPTP
 from filuta_fastapi_users.types import DependencyCallable
 
 
-class OtpManager(Generic[OTPTP]):
+class OtpManager(Generic[models.OTPTP]):
     def __init__(
         self,
-        otp_token_db: OtpTokenDatabase[OTPTP],
+        otp_token_db: OtpTokenDatabase[models.OTPTP],
     ) -> None:
         self.otp_token_db = otp_token_db
 
@@ -20,13 +20,13 @@ class OtpManager(Generic[OTPTP]):
         otp = "".join([str(secrets.randbelow(10)) for _ in range(length)])
         return otp
 
-    async def create_otp_email_token(self, access_token: str, mfa_token: str) -> OTPTP:
+    async def create_otp_email_token(self, access_token: str, mfa_token: str) -> models.OTPTP:
         otp_record = await self.otp_token_db.create(
             create_dict={"access_token": access_token, "mfa_type": "email", "mfa_token": mfa_token}
         )
         return otp_record
 
-    async def create_otp_token(self, access_token: str, mfa_token: str, mfa_type: str) -> OTPTP:
+    async def create_otp_token(self, access_token: str, mfa_token: str, mfa_type: str) -> models.OTPTP:
         current_datetime = datetime.utcnow()
         expire_time = current_datetime + timedelta(minutes=10)
 
@@ -39,21 +39,21 @@ class OtpManager(Generic[OTPTP]):
             }
         )
 
-    async def update_otp_token(self, otp_token_record: OTPTP, mfa_token: str) -> OTPTP:
+    async def update_otp_token(self, otp_token_record: models.OTPTP, mfa_token: str) -> models.OTPTP:
         return await self.otp_token_db.update(otp_token=otp_token_record, update_dict={"mfa_token": mfa_token})
 
     async def find_otp_token(
         self, access_token: str, mfa_type: str, mfa_token: str, only_valid: bool = False
-    ) -> OTPTP | None:
+    ) -> models.OTPTP | None:
         return await self.otp_token_db.find_otp_token(
             access_token=access_token, mfa_type=mfa_type, mfa_token=mfa_token, only_valid=only_valid
         )
 
-    async def user_has_issued_token(self, access_token: str, mfa_type: str) -> OTPTP | None:
+    async def user_has_issued_token(self, access_token: str, mfa_type: str) -> models.OTPTP | None:
         return await self.otp_token_db.user_has_token(access_token=access_token, mfa_type=mfa_type)
 
-    async def delete_record(self, otp_record: OTPTP) -> None:
+    async def delete_record(self, otp_record: models.OTPTP) -> None:
         return await self.otp_token_db.delete(otp_record=otp_record)
 
 
-OtpManagerDependency = DependencyCallable[OtpManager[OTPTP]]
+OtpManagerDependency = DependencyCallable[OtpManager[models.OTPTP]]

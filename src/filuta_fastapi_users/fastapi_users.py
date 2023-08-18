@@ -6,7 +6,6 @@ from fastapi import APIRouter
 from filuta_fastapi_users import models, schemas
 from filuta_fastapi_users.authentication import AuthenticationBackend, Authenticator
 from filuta_fastapi_users.authentication.mfa.otp_manager import OtpManagerDependency
-from filuta_fastapi_users.authentication.strategy.db.models import AP, OTPTP
 from filuta_fastapi_users.jwt import SecretType
 from filuta_fastapi_users.manager import UserManagerDependency
 from filuta_fastapi_users.router import (
@@ -27,7 +26,7 @@ except ModuleNotFoundError:  # pragma: no cover
     BaseOAuth2 = type
 
 
-class FastAPIUsers(Generic[models.UP, models.ID, AP]):
+class FastAPIUsers(Generic[models.UP, models.ID, models.AP]):
     """
     Main object that ties together the component for users authentication.
 
@@ -39,14 +38,14 @@ class FastAPIUsers(Generic[models.UP, models.ID, AP]):
     with a specific set of parameters.
     """
 
-    authenticator: Authenticator[models.UP, models.ID, AP]
+    authenticator: Authenticator[models.UP, models.ID, models.AP]
 
     def __init__(
         self,
         get_user_manager: UserManagerDependency[models.UP, models.ID],
-        auth_backends: Sequence[AuthenticationBackend[models.UP, models.ID, AP]],
+        auth_backends: Sequence[AuthenticationBackend[models.UP, models.ID, models.AP]],
         get_refresh_token_manager: Any,
-        get_otp_manager: OtpManagerDependency[OTPTP],
+        get_otp_manager: OtpManagerDependency[models.OTPTP],
         requires_verification: bool = False,
     ):
         self.authenticator = Authenticator(auth_backends, get_user_manager)
@@ -79,7 +78,7 @@ class FastAPIUsers(Generic[models.UP, models.ID, AP]):
         """Return a reset password process router."""
         return get_reset_password_router(get_user_manager=self.get_user_manager)
 
-    def get_auth_router(self, backend: AuthenticationBackend[models.UP, models.ID, AP]) -> APIRouter:
+    def get_auth_router(self, backend: AuthenticationBackend[models.UP, models.ID, models.AP]) -> APIRouter:
         """
         Return an auth router for a given authentication backend.
 
@@ -94,7 +93,7 @@ class FastAPIUsers(Generic[models.UP, models.ID, AP]):
             requires_verification=self.requires_verification,
         )
 
-    def get_otp_router(self, backend: AuthenticationBackend[models.UP, models.ID, AP]) -> APIRouter:
+    def get_otp_router(self, backend: AuthenticationBackend[models.UP, models.ID, models.AP]) -> APIRouter:
         """
         Return an auth router for a given authentication backend.
 
@@ -112,7 +111,7 @@ class FastAPIUsers(Generic[models.UP, models.ID, AP]):
     def get_oauth_router(
         self,
         oauth_client: BaseOAuth2[dict[str, Any]],
-        backend: AuthenticationBackend[models.UP, models.ID, AP],
+        backend: AuthenticationBackend[models.UP, models.ID, models.AP],
         state_secret: SecretType,
         redirect_url: str | None = None,
         associate_by_email: bool = False,
