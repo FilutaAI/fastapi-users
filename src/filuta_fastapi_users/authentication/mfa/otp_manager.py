@@ -1,4 +1,5 @@
 import secrets
+from datetime import datetime, timedelta
 from typing import Generic
 
 from filuta_fastapi_users.authentication.strategy.db.adapter import OtpTokenDatabase
@@ -25,11 +26,34 @@ class OtpManager(Generic[OTPTP]):
         )
         return otp_record
 
-    async def find_otp_token(self, access_token: str, mfa_type: str, mfa_token: str) -> OTPTP | None:
-        otp_record = await self.otp_token_db.find_otp_token(
-            access_token=access_token, mfa_type=mfa_type, mfa_token=mfa_token
+    async def create_otp_token(self, access_token: str, mfa_token: str, mfa_type: str) -> OTPTP:
+        current_datetime = datetime.utcnow()
+        expire_time = current_datetime + timedelta(minutes=10)
+
+        return await self.otp_token_db.create(
+            create_dict={
+                "access_token": access_token,
+                "mfa_type": mfa_type,
+                "mfa_token": mfa_token,
+                "expire_at": expire_time,
+            }
         )
-        return otp_record
+
+    async def update_otp_token(self, otp_token_record: OTPTP, mfa_token: str) -> OTPTP:
+        return await self.otp_token_db.update(otp_token=otp_token_record, update_dict={"mfa_token": mfa_token})
+
+    async def find_otp_token(
+        self, access_token: str, mfa_type: str, mfa_token: str, only_valid: bool = False
+    ) -> OTPTP | None:
+        return await self.otp_token_db.find_otp_token(
+            access_token=access_token, mfa_type=mfa_type, mfa_token=mfa_token, only_valid=only_valid
+        )
+
+    async def user_has_issued_token(self, access_token: str, mfa_type: str) -> OTPTP | None:
+        return await self.otp_token_db.user_has_token(access_token=access_token, mfa_type=mfa_type)
+
+    async def delete_record(self, otp_record: OTPTP) -> None:
+        return await self.otp_token_db.delete(otp_record=otp_record)
 
 
 OtpManagerDependency = DependencyCallable[OtpManager[OTPTP]]

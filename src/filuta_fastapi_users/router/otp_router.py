@@ -13,22 +13,26 @@ from filuta_fastapi_users.manager import BaseUserManager, UserManagerDependency
 
 class OtpResponse(BaseModel, Generic[AP]):
     status: bool
-    message: str
+    message: str | None
+    error: str | None
     access_token: AP | None
 
 
-def get_otp_router(
+def get_otp_router(  # noqa: C901
     backend: AuthenticationBackend[models.UP, models.ID, AP],
     get_user_manager: UserManagerDependency[models.UP, models.ID],
     authenticator: Authenticator[models.UP, models.ID, AP],
     get_otp_manager: OtpManagerDependency[OTPTP],
+    requires_verification: bool = False,
 ) -> APIRouter:
     """Generate a router with login/logout routes for an authentication backend."""
     router = APIRouter()
 
-    get_current_user_token = authenticator.current_user_token(active=True, verified=True, optional=False)
+    get_current_user_token = authenticator.current_user_token(
+        active=True, verified=requires_verification, authorized=False
+    )
 
-    get_current_active_user = authenticator.current_user(active=True, verified=False, optional=False)
+    get_current_active_user = authenticator.current_user(active=True, verified=requires_verification, authorized=False)
 
     @router.post(
         "/otp/send_token",
@@ -53,8 +57,18 @@ def get_otp_router(
             token_mfas = access_token_record.mfa_scopes
 
         if "email" in token_mfas and target_mfa_verification == "email":
+            already_obtained = await otp_manager.user_has_issued_token(
+                access_token=token, mfa_type=target_mfa_verification
+            )
             otp_token = otp_manager.generate_otp_token()
-            otp_token_record = await otp_manager.create_otp_email_token(access_token=token, mfa_token=otp_token)
+
+            if already_obtained:
+                await otp_manager.delete_record(otp_record=already_obtained)
+
+            otp_token_record = await otp_manager.create_otp_token(
+                access_token=token, mfa_token=otp_token, mfa_type="email"
+            )
+
             await user_manager.on_after_otp_email_created(
                 user=user, access_token_record=access_token_record, otp_token_record=otp_token_record
             )
@@ -68,7 +82,7 @@ def get_otp_router(
         if "authenticator" in token_mfas and target_mfa_verification == "authenticator":
             pass
 
-        return OtpResponse(status=False, message="No MFA")
+        return OtpResponse(status=False, error="No MFA")
 
     class ValidateOtpTokenRequestBody(BaseModel):
         code: str
@@ -92,21 +106,30 @@ def get_otp_router(
         mfa_token = jsonBody.code
         mfa_type = jsonBody.type
 
-        """ todo get_otp_token_db """
-
-        otp_record = await otp_manager.find_otp_token(access_token=token, mfa_type=mfa_type, mfa_token=mfa_token)
+        otp_record = await otp_manager.find_otp_token(
+            access_token=token, mfa_type=mfa_type, mfa_token=mfa_token, only_valid=True
+        )
 
         if otp_record:
             token_record = await strategy.get_token_record(token=token)
-            if token_record is not None:
-                token_mfa_scopes = copy.deepcopy(token_record.mfa_scopes)
-                token_mfa_scopes[mfa_type] = 1
-                new_token = await strategy.update_token(
-                    access_token=token_record, data={"mfa_scopes": token_mfa_scopes}
-                )
+            if token_record is None:
+                return OtpResponse(status=False, error="no-token")
+
+            token_mfa_scopes = copy.deepcopy(token_record.mfa_scopes)
+            token_mfa_scopes[mfa_type] = 1
+
+            if all(value == 1 for value in token_mfa_scopes.values()):
+                scopes = "approved"
+            else:
+                scopes = "none"
+
+            new_token = await strategy.update_token(
+                access_token=token_record, data={"mfa_scopes": token_mfa_scopes, "scopes": scopes}
+            )
+            await otp_manager.delete_record(otp_record=otp_record)
 
             return OtpResponse(status=True, message="Approved", access_token=new_token)
 
-        return OtpResponse(status=False, message="Validation failed")
+        return OtpResponse(status=False, error="no-token")
 
     return router

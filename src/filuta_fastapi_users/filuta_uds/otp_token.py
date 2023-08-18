@@ -58,11 +58,27 @@ class SQLAlchemyOtpTokenDatabase(Generic[OTPTP], OtpTokenDatabase[OTPTP]):
         results = await self.session.execute(statement)
         return results.scalar_one_or_none()
 
-    async def find_otp_token(self, access_token: str, mfa_type: str, mfa_token: str) -> OTPTP | None:
+    async def find_otp_token(
+        self, access_token: str, mfa_type: str, mfa_token: str, only_valid: bool = False
+    ) -> OTPTP | None:
         statement = (
             select(self.otp_token_table)
             .where(self.otp_token_table.access_token == access_token)
             .where(self.otp_token_table.mfa_token == mfa_token)
+            .where(self.otp_token_table.mfa_type == mfa_type)
+        )
+
+        if only_valid:
+            current_utc_time = datetime.utcnow()
+            statement = statement.where(self.otp_token_table.expire_at > current_utc_time)
+
+        results = await self.session.execute(statement)
+        return results.scalar_one_or_none()
+
+    async def user_has_token(self, access_token: str, mfa_type: str) -> OTPTP | None:
+        statement = (
+            select(self.otp_token_table)
+            .where(self.otp_token_table.access_token == access_token)
             .where(self.otp_token_table.mfa_type == mfa_type)
         )
 

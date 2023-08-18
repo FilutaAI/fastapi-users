@@ -64,6 +64,7 @@ class Authenticator(Generic[models.UP, models.ID, AP]):
         active: bool = False,
         verified: bool = False,
         superuser: bool = False,
+        authorized: bool = True,
         get_enabled_backends: EnabledBackendsDependency[models.UP, models.ID, AP] | None = None,
     ) -> Callable[[Any], tuple[models.UP | None, str | None]]:
         """
@@ -108,6 +109,7 @@ class Authenticator(Generic[models.UP, models.ID, AP]):
         active: bool = False,
         verified: bool = False,
         superuser: bool = False,
+        authorized: bool = True,
         get_enabled_backends: EnabledBackendsDependency[models.UP, models.ID, AP] | None = None,
     ):
         """
@@ -141,6 +143,7 @@ class Authenticator(Generic[models.UP, models.ID, AP]):
                 active=active,
                 verified=verified,
                 superuser=superuser,
+                authorized=authorized,
                 **kwargs,
             )
             return user
@@ -155,6 +158,7 @@ class Authenticator(Generic[models.UP, models.ID, AP]):
         active: bool = False,
         verified: bool = False,
         superuser: bool = False,
+        authorized: bool = False,
         **kwargs: Any,
     ) -> tuple[models.UP | None, str | None]:
         user: models.UP | None = None
@@ -170,7 +174,7 @@ class Authenticator(Generic[models.UP, models.ID, AP]):
                 token = kwargs[name_to_variable_name(backend.name)]
                 strategy: Strategy[models.UP, models.ID, AP] = kwargs[name_to_strategy_variable_name(backend.name)]
                 if token is not None:
-                    user = await strategy.read_token(token, user_manager)
+                    user = await strategy.read_token(token=token, user_manager=user_manager, authorized=authorized)
                     if user:
                         break
 

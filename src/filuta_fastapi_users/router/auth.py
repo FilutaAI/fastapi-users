@@ -3,9 +3,10 @@ from fastapi.security import OAuth2PasswordRequestForm
 
 from filuta_fastapi_users import models
 from filuta_fastapi_users.authentication import AuthenticationBackend, Authenticator, Strategy
-from filuta_fastapi_users.authentication.strategy.db.models import AP
+from filuta_fastapi_users.authentication.strategy.db.models import AP, RTP
 from filuta_fastapi_users.manager import BaseUserManager, UserManagerDependency
 from filuta_fastapi_users.openapi import OpenAPIResponseType
+from filuta_fastapi_users.refresh_token.refresh_token_manager import RefreshTokenManager, RefreshTokenManagerDependency
 from filuta_fastapi_users.router.common import ErrorCode, ErrorModel
 
 
@@ -13,15 +14,11 @@ def get_auth_router(
     backend: AuthenticationBackend[models.UP, models.ID, AP],
     get_user_manager: UserManagerDependency[models.UP, models.ID],
     authenticator: Authenticator[models.UP, models.ID, AP],
+    get_refresh_token_manager: RefreshTokenManagerDependency[RTP],
     requires_verification: bool = False,
 ) -> APIRouter:
     """Generate a router with login/logout routes for an authentication backend."""
     router = APIRouter()
-    get_current_user_token = authenticator.current_user_token(
-        active=True, verified=requires_verification, optional=False
-    )
-
-    authenticator.current_user(active=True, verified=False, optional=False)
 
     login_responses: OpenAPIResponseType = {
         status.HTTP_400_BAD_REQUEST: {
@@ -77,6 +74,27 @@ def get_auth_router(
         **{status.HTTP_401_UNAUTHORIZED: {"description": "Missing token or inactive user."}},
         **backend.transport.get_openapi_logout_responses_success(),
     }
+
+    get_current_user_token = authenticator.current_user_token(
+        active=True, verified=requires_verification, authorized=True
+    )
+
+    @router.post(
+        "/renew_access_token",
+        name=f"auth:{backend.name}.renew_access_token",
+    )
+    async def renew_access_token(
+        request: Request,
+        credentials: OAuth2PasswordRequestForm = Depends(),
+        user_manager: BaseUserManager[models.UP, models.ID] = Depends(get_user_manager),
+        strategy: Strategy[models.UP, models.ID, AP] = Depends(backend.get_strategy),
+        refresh_token_manager: RefreshTokenManager[RTP] = Depends(get_refresh_token_manager),
+    ) -> None:
+        pass
+
+    get_current_user_token = authenticator.current_user_token(
+        active=True, verified=requires_verification, authorized=True
+    )
 
     @router.post("/logout", name=f"auth:{backend.name}.logout", responses=logout_responses)
     async def logout(

@@ -15,7 +15,7 @@ class DatabaseStrategy(Strategy[models.UP, models.ID, AP], Generic[models.UP, mo
         self.lifetime_seconds = lifetime_seconds
 
     async def read_token(
-        self, token: str | None, user_manager: BaseUserManager[models.UP, models.ID]
+        self, token: str | None, user_manager: BaseUserManager[models.UP, models.ID], authorized: bool = False
     ) -> models.UP | None:
         if token is None:
             return None
@@ -24,7 +24,7 @@ class DatabaseStrategy(Strategy[models.UP, models.ID, AP], Generic[models.UP, mo
         if self.lifetime_seconds:
             max_age = datetime.now(UTC) - timedelta(seconds=self.lifetime_seconds)
 
-        access_token = await self.access_token_db.get_by_token(token, max_age)
+        access_token = await self.access_token_db.get_by_token(token=token, max_age=max_age, authorized=authorized)
         if access_token is None:
             return None
 
