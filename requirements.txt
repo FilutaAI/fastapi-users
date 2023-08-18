@@ -1,0 +1,11 @@
+email-validator >=1.1.0,<2.1
+
+fastapi >=0.65.2
+httpx_oauth==0.13.0
+makefun >=1.11.2,<2.0.0
+passlib[bcrypt] ==1.7.4
+pydantic==1.10.11
+pyjwt[crypto] ==2.8.0
+python-dotenv==1.0.0
+python-multipart ==0.0.6
+sqlalchemy==2.0.20

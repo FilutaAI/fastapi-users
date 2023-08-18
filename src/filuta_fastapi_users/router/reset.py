@@ -47,18 +47,16 @@ def get_reset_password_router(
         request: Request,
         email: EmailStr = Body(..., embed=True),
         user_manager: BaseUserManager[models.UP, models.ID] = Depends(get_user_manager),
-    ):
+    ) -> None:
         try:
             user = await user_manager.get_by_email(email)
         except exceptions.UserNotExists:
-            return None
+            return
 
         try:
             await user_manager.forgot_password(user, request)
         except exceptions.UserInactive:
             pass
-
-        return None
 
     @router.post(
         "/reset-password",
@@ -70,7 +68,7 @@ def get_reset_password_router(
         token: str = Body(...),
         password: str = Body(...),
         user_manager: BaseUserManager[models.UP, models.ID] = Depends(get_user_manager),
-    ):
+    ) -> None:
         try:
             await user_manager.reset_password(token, password, request)
         except (

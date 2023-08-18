@@ -10,9 +10,11 @@ class AccessTokenProtocol(Protocol[models.ID]):
     token: str
     user_id: models.ID
     created_at: datetime
+    scopes: str
+    mfa_scopes: dict[str, int]
 
 
-AP = TypeVar("AP", bound=AccessTokenProtocol)
+AP = TypeVar("AP", bound=AccessTokenProtocol)  # type: ignore
 
 
 class RefreshTokenProtocol(Protocol[models.ID]):
@@ -23,10 +25,10 @@ class RefreshTokenProtocol(Protocol[models.ID]):
     created_at: datetime
 
 
-RTP = TypeVar("RTP", bound=RefreshTokenProtocol)
+RTP = TypeVar("RTP", bound=RefreshTokenProtocol)  # type: ignore
 
 
-class OtpTokenProtocol(Protocol[models.ID]):
+class OtpTokenProtocol(Protocol):
     """OTP token protocol that ORM model should follow."""
 
     access_token: str

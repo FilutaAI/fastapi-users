@@ -1,36 +1,28 @@
 import secrets
-from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, Generic, Optional
+from datetime import UTC, datetime, timedelta
+from typing import Any, Generic
 
 from filuta_fastapi_users import exceptions, models
 from filuta_fastapi_users.authentication.strategy.base import Strategy
-from filuta_fastapi_users.authentication.strategy.db.adapter import AccessTokenDatabase,RefreshTokenDatabase, OtpTokenDatabase
-from filuta_fastapi_users.authentication.strategy.db.models import AP, OTPTP, RTP
+from filuta_fastapi_users.authentication.strategy.db.adapter import AccessTokenDatabase
+from filuta_fastapi_users.authentication.strategy.db.models import AP
 from filuta_fastapi_users.manager import BaseUserManager
 
-class DatabaseStrategy(
-    Strategy[models.UP, models.ID], 
-    Generic[models.UP, models.ID, AP]
-):
-    def __init__(
-        self, 
-        access_token_db: AccessTokenDatabase[AP],
-        lifetime_seconds: Optional[int] = None
-    ):
+
+class DatabaseStrategy(Strategy[models.UP, models.ID, AP], Generic[models.UP, models.ID, AP]):
+    def __init__(self, access_token_db: AccessTokenDatabase[AP], lifetime_seconds: int | None = None):
         self.access_token_db = access_token_db
         self.lifetime_seconds = lifetime_seconds
 
     async def read_token(
-        self, token: Optional[str], user_manager: BaseUserManager[models.UP, models.ID]
-    ) -> Optional[models.UP]:
+        self, token: str | None, user_manager: BaseUserManager[models.UP, models.ID]
+    ) -> models.UP | None:
         if token is None:
             return None
 
         max_age = None
         if self.lifetime_seconds:
-            max_age = datetime.now(timezone.utc) - timedelta(
-                seconds=self.lifetime_seconds
-            )
+            max_age = datetime.now(UTC) - timedelta(seconds=self.lifetime_seconds)
 
         access_token = await self.access_token_db.get_by_token(token, max_age)
         if access_token is None:
@@ -42,27 +34,23 @@ class DatabaseStrategy(
         except (exceptions.UserNotExists, exceptions.InvalidID):
             return None
 
-    async def get_token_record(
-        self, token: Optional[str]
-    ) -> Optional[models.UP]:
+    async def get_token_record(self, token: str | None) -> AP | None:
         if token is None:
             return None
 
         max_age = None
         if self.lifetime_seconds:
-            max_age = datetime.now(timezone.utc) - timedelta(
-                seconds=self.lifetime_seconds
-            )
+            max_age = datetime.now(UTC) - timedelta(seconds=self.lifetime_seconds)
 
         access_token = await self.access_token_db.get_by_token(token, max_age)
         return access_token
 
-    async def write_token(self, user: models.UP) -> str:
+    async def write_token(self, user: models.UP) -> AP:
         access_token_dict = self._create_access_token_dict(user)
         access_token = await self.access_token_db.create(access_token_dict)
         return access_token
 
-    async def update_token(self, access_token, data) -> str:
+    async def update_token(self, access_token: AP, data: dict[str, Any]) -> AP:
         access_token = await self.access_token_db.update(access_token=access_token, update_dict=data)
         return access_token
 
@@ -71,6 +59,6 @@ class DatabaseStrategy(
         if access_token is not None:
             await self.access_token_db.delete(access_token)
 
-    def _create_access_token_dict(self, user: models.UP) -> Dict[str, Any]:
+    def _create_access_token_dict(self, user: models.UP) -> dict[str, Any]:
         token = secrets.token_urlsafe()
         return {"token": token, "user_id": user.id, "scopes": "none", "mfa_scopes": {"email": 0}}

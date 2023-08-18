@@ -1,29 +1,24 @@
-from typing import Type
-
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 
 from filuta_fastapi_users import exceptions, models, schemas
 from filuta_fastapi_users.authentication import Authenticator
+from filuta_fastapi_users.authentication.strategy.db.models import AP
 from filuta_fastapi_users.manager import BaseUserManager, UserManagerDependency
 from filuta_fastapi_users.router.common import ErrorCode, ErrorModel
 
 
-def get_users_router(
+def get_users_router(  # noqa: C901
     get_user_manager: UserManagerDependency[models.UP, models.ID],
-    user_schema: Type[schemas.U],
-    user_update_schema: Type[schemas.UU],
-    authenticator: Authenticator,
+    user_schema: type[schemas.U],
+    user_update_schema: type[schemas.UU],
+    authenticator: Authenticator[models.UP, models.ID, AP],
     requires_verification: bool = False,
 ) -> APIRouter:
     """Generate a router with the authentication routes."""
     router = APIRouter()
 
-    get_current_active_user = authenticator.current_user(
-        active=True, verified=requires_verification
-    )
-    get_current_superuser = authenticator.current_user(
-        active=True, verified=requires_verification, superuser=True
-    )
+    get_current_active_user = authenticator.current_user(active=True, verified=requires_verification)
+    get_current_superuser = authenticator.current_user(active=True, verified=requires_verification, superuser=True)
 
     async def get_user_or_404(
         id: str,
@@ -47,7 +42,7 @@ def get_users_router(
     )
     async def me(
         user: models.UP = Depends(get_current_active_user),
-    ):
+    ) -> schemas.U:
         return schemas.model_validate(user_schema, user)
 
     @router.patch(
@@ -66,17 +61,14 @@ def get_users_router(
                         "examples": {
                             ErrorCode.UPDATE_USER_EMAIL_ALREADY_EXISTS: {
                                 "summary": "A user with this email already exists.",
-                                "value": {
-                                    "detail": ErrorCode.UPDATE_USER_EMAIL_ALREADY_EXISTS
-                                },
+                                "value": {"detail": ErrorCode.UPDATE_USER_EMAIL_ALREADY_EXISTS},
                             },
                             ErrorCode.UPDATE_USER_INVALID_PASSWORD: {
                                 "summary": "Password validation failed.",
                                 "value": {
                                     "detail": {
                                         "code": ErrorCode.UPDATE_USER_INVALID_PASSWORD,
-                                        "reason": "Password should be"
-                                        "at least 3 characters",
+                                        "reason": "Password should be" "at least 3 characters",
                                     }
                                 },
                             },
@@ -91,11 +83,9 @@ def get_users_router(
         user_update: user_update_schema,  # type: ignore
         user: models.UP = Depends(get_current_active_user),
         user_manager: BaseUserManager[models.UP, models.ID] = Depends(get_user_manager),
-    ):
+    ) -> schemas.U:
         try:
-            user = await user_manager.update(
-                user_update, user, safe=True, request=request
-            )
+            user = await user_manager.update(user_update, user, safe=True, request=request)
             return schemas.model_validate(user_schema, user)
         except exceptions.InvalidPasswordException as e:
             raise HTTPException(
@@ -128,7 +118,7 @@ def get_users_router(
             },
         },
     )
-    async def get_user(user=Depends(get_user_or_404)):
+    async def get_user(user: models.UP = Depends(get_user_or_404)) -> schemas.U:
         return schemas.model_validate(user_schema, user)
 
     @router.patch(
@@ -153,17 +143,14 @@ def get_users_router(
                         "examples": {
                             ErrorCode.UPDATE_USER_EMAIL_ALREADY_EXISTS: {
                                 "summary": "A user with this email already exists.",
-                                "value": {
-                                    "detail": ErrorCode.UPDATE_USER_EMAIL_ALREADY_EXISTS
-                                },
+                                "value": {"detail": ErrorCode.UPDATE_USER_EMAIL_ALREADY_EXISTS},
                             },
                             ErrorCode.UPDATE_USER_INVALID_PASSWORD: {
                                 "summary": "Password validation failed.",
                                 "value": {
                                     "detail": {
                                         "code": ErrorCode.UPDATE_USER_INVALID_PASSWORD,
-                                        "reason": "Password should be"
-                                        "at least 3 characters",
+                                        "reason": "Password should be" "at least 3 characters",
                                     }
                                 },
                             },
@@ -176,13 +163,11 @@ def get_users_router(
     async def update_user(
         user_update: user_update_schema,  # type: ignore
         request: Request,
-        user=Depends(get_user_or_404),
+        user: models.UP = Depends(get_user_or_404),
         user_manager: BaseUserManager[models.UP, models.ID] = Depends(get_user_manager),
-    ):
+    ) -> schemas.U:
         try:
-            user = await user_manager.update(
-                user_update, user, safe=False, request=request
-            )
+            user = await user_manager.update(user_update, user, safe=False, request=request)
             return schemas.model_validate(user_schema, user)
         except exceptions.InvalidPasswordException as e:
             raise HTTPException(
@@ -218,10 +203,9 @@ def get_users_router(
     )
     async def delete_user(
         request: Request,
-        user=Depends(get_user_or_404),
+        user: models.UP = Depends(get_user_or_404),
         user_manager: BaseUserManager[models.UP, models.ID] = Depends(get_user_manager),
-    ):
+    ) -> None:
         await user_manager.delete(user, request=request)
-        return None
 
     return router
