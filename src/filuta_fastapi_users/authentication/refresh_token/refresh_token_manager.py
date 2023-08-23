@@ -1,5 +1,5 @@
 import secrets
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from typing import Generic
 
 from filuta_fastapi_users import models
@@ -14,20 +14,20 @@ class RefreshTokenManager(Generic[models.RTP]):
     ) -> None:
         self.refresh_token_db = refresh_token_db
 
-    def generate_refresh_token(self, length: int = 100) -> str:
-        """Generate a random refresh token of given length."""
-        return secrets.token_urlsafe(length)
+    def generate_refresh_token(self) -> str:
+        return secrets.token_urlsafe()
 
-    async def create_refresh_token(self, token: str, user: models.UP) -> models.RTP:
-        current_datetime = datetime.utcnow()
-        expire_time = current_datetime + timedelta(days=30)
+    async def generate_new_token_for_user(self, user: models.UP) -> models.RTP:
+        token = self.generate_refresh_token()
 
-        return await self.refresh_token_db.create(
-            create_dict={"token": token, "user_id": user.id, "created_at": current_datetime, "expire_time": expire_time}
-        )
+        return await self.refresh_token_db.create(create_dict={"token": token, "user_id": user.id})
 
-    async def update_refresh_token(self, refresh_token_record: models.RTP, token: str) -> models.RTP:
-        return await self.refresh_token_db.update(refresh_token=refresh_token_record, update_dict={"token": token})
+    async def find_refresh_token(self, refresh_token: str, lifetime_seconds: int | None = None) -> models.RTP | None:
+        max_age = None
+        if lifetime_seconds:
+            max_age = datetime.now(UTC) - timedelta(seconds=lifetime_seconds)
+
+        return await self.refresh_token_db.get_by_token(token=refresh_token, max_age=max_age)
 
     async def delete_record(self, item: models.RTP) -> None:
         return await self.refresh_token_db.delete(refresh_token=item)

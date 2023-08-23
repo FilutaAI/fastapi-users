@@ -57,9 +57,16 @@ class SQLAlchemyAccessTokenDatabase(Generic[models.AP], AccessTokenDatabase[mode
         self.access_token_table = access_token_table
 
     async def get_by_token(
-        self, token: str, max_age: datetime | None = None, authorized: bool = False
+        self,
+        token: str,
+        max_age: datetime | None = None,
+        authorized: bool = False,
+        ignore_expired: bool = False,
     ) -> models.AP | None:
         statement = select(self.access_token_table).where(self.access_token_table.token == token)
+
+        if ignore_expired:
+            max_age = None
         if max_age is not None:
             statement = statement.where(self.access_token_table.created_at >= max_age)
 

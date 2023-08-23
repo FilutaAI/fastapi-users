@@ -14,7 +14,11 @@ class DatabaseStrategy(Strategy[models.UP, models.ID, models.AP], Generic[models
         self.lifetime_seconds = lifetime_seconds
 
     async def read_token(
-        self, token: str | None, user_manager: BaseUserManager[models.UP, models.ID], authorized: bool = False
+        self,
+        token: str | None,
+        user_manager: BaseUserManager[models.UP, models.ID],
+        authorized: bool = False,
+        ignore_expired: bool = False,
     ) -> models.UP | None:
         if token is None:
             return None
@@ -23,7 +27,9 @@ class DatabaseStrategy(Strategy[models.UP, models.ID, models.AP], Generic[models
         if self.lifetime_seconds:
             max_age = datetime.now(UTC) - timedelta(seconds=self.lifetime_seconds)
 
-        access_token = await self.access_token_db.get_by_token(token=token, max_age=max_age, authorized=authorized)
+        access_token = await self.access_token_db.get_by_token(
+            token=token, max_age=max_age, authorized=authorized, ignore_expired=ignore_expired
+        )
         if access_token is None:
             return None
 
@@ -44,8 +50,19 @@ class DatabaseStrategy(Strategy[models.UP, models.ID, models.AP], Generic[models
         access_token = await self.access_token_db.get_by_token(token, max_age)
         return access_token
 
+    async def get_token_record_raw(self, token: str | None) -> models.AP | None:
+        if token is None:
+            return None
+
+        access_token = await self.access_token_db.get_by_token(token)
+        return access_token
+
     async def write_token(self, user: models.UP) -> models.AP:
         access_token_dict = self._create_access_token_dict(user)
+        access_token = await self.access_token_db.create(access_token_dict)
+        return access_token
+
+    async def insert_token(self, access_token_dict: dict[str, Any]) -> models.AP:
         access_token = await self.access_token_db.create(access_token_dict)
         return access_token
 
@@ -53,11 +70,14 @@ class DatabaseStrategy(Strategy[models.UP, models.ID, models.AP], Generic[models
         access_token = await self.access_token_db.update(access_token=access_token, update_dict=data)
         return access_token
 
-    async def destroy_token(self, token: str, user: models.UP) -> None:
+    async def destroy_token(self, token: str) -> None:
         access_token = await self.access_token_db.get_by_token(token)
         if access_token is not None:
             await self.access_token_db.delete(access_token)
 
     def _create_access_token_dict(self, user: models.UP) -> dict[str, Any]:
-        token = secrets.token_urlsafe()
+        token = self.generate_token()
         return {"token": token, "user_id": user.id, "scopes": "none", "mfa_scopes": {"email": 0}}
+
+    def generate_token(self) -> str:
+        return secrets.token_urlsafe()

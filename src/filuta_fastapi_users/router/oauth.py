@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, cast
 
 import jwt
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status
@@ -101,7 +101,8 @@ def get_oauth_router(
         strategy: Strategy[models.UP, models.ID, models.AP] = Depends(backend.get_strategy),
     ) -> Response:
         token, state = access_token_state
-        account_id, account_email = await oauth_client.get_id_email(token["access_token"])
+        access_token: str = cast(str, token["access_token"])
+        account_id, account_email = await oauth_client.get_id_email(access_token)
 
         if account_email is None:
             raise HTTPException(
@@ -114,14 +115,15 @@ def get_oauth_router(
         except jwt.DecodeError:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST)
 
+        refresh_token: str = cast(str, token.get("refresh_token"))
         try:
             user = await user_manager.oauth_callback(
                 oauth_client.name,
-                token["access_token"],
+                access_token,
                 account_id,
                 account_email,
                 token.get("expires_at"),
-                token.get("refresh_token"),
+                refresh_token,
                 request,
                 associate_by_email=associate_by_email,
                 is_verified_by_default=is_verified_by_default,
@@ -139,7 +141,7 @@ def get_oauth_router(
             )
 
         # Authenticate
-        response = await backend.login(strategy, user)
+        response = await backend.login(strategy, user, refresh_token)
         await user_manager.on_after_login(user, request, response)
         return response
 

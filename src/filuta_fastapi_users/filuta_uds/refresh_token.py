@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 from typing import TYPE_CHECKING, Any, Generic
 
-from sqlalchemy import JSON, ForeignKey, String, select
+from sqlalchemy import ForeignKey, String, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Mapped, declared_attr, mapped_column
 
@@ -18,16 +18,14 @@ class SQLAlchemyBaseRefreshTokenTable(Generic[models.ID]):
     __tablename__ = "refresh_tokens"
 
     if TYPE_CHECKING:  # pragma: no cover
+        user_id: models.ID
         token: str
         created_at: datetime
-        scopes: str
-        mfa_scopes: dict[str, int]
-        user_id: models.ID
     else:
-        token = mapped_column(String(length=43), primary_key=True)
-        scopes = mapped_column(String(length=255))
-        mfa_scopes = mapped_column(JSON())
-        created_at = mapped_column(TIMESTAMPAware(timezone=True), index=True, nullable=False, default=now_utc)
+        token: Mapped[str] = mapped_column(String(length=43), primary_key=True)
+        created_at: Mapped[datetime] = mapped_column(
+            TIMESTAMPAware(timezone=True), index=True, nullable=False, default=now_utc
+        )
 
 
 class SQLAlchemyBaseRefreshTokenTableUUID(SQLAlchemyBaseRefreshTokenTable[uuid.UUID]):

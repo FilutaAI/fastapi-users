@@ -14,6 +14,7 @@ from filuta_fastapi_users.schemas import model_dump
 
 class BearerResponse(BaseModel):
     access_token: str
+    refresh_token: str
     token_type: str
     scopes: str
     mfa_scopes: dict[str, int]
@@ -25,12 +26,13 @@ class BearerTransport(Transport):
     def __init__(self, tokenUrl: str):
         self.scheme = OAuth2PasswordBearer(tokenUrl, auto_error=False)
 
-    async def get_login_response(self, record: models.AP) -> Response:
+    async def get_login_response(self, record: models.AP, refresh_token: str) -> Response:
         bearer_response = BearerResponse(
             access_token=record.token,
             token_type="bearer",
             scopes=record.scopes,
-            mfa_scopes=record.mfa_scopes,  # nosec B106
+            mfa_scopes=record.mfa_scopes,
+            refresh_token=refresh_token,  # nosec B106
         )
         return JSONResponse(model_dump(bearer_response))
 

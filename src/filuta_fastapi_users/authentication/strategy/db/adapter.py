@@ -8,7 +8,11 @@ class AccessTokenDatabase(Protocol, Generic[models.AP]):
     """Protocol for retrieving, creating and updating access tokens from a database."""
 
     async def get_by_token(
-        self, token: str, max_age: datetime | None = None, authorized: bool = False
+        self,
+        token: str,
+        max_age: datetime | None = None,
+        authorized: bool = False,
+        ignore_expired: bool = False,
     ) -> models.AP | None:
         """Get a single access token by token."""
         ...  # pragma: no cover

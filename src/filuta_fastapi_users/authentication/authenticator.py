@@ -57,13 +57,14 @@ class Authenticator(Generic[models.UP, models.ID, models.AP]):
         self.backends = backends
         self.get_user_manager = get_user_manager
 
-    def current_user_token(
+    def current_user_token(  # noqa: PLR0913
         self,
         optional: bool = False,
         active: bool = False,
         verified: bool = False,
         superuser: bool = False,
         authorized: bool = True,
+        ignore_expired: bool = False,
         get_enabled_backends: EnabledBackendsDependency[models.UP, models.ID, models.AP] | None = None,
     ) -> Callable[[Any], tuple[models.UP | None, str | None]]:
         """
@@ -97,18 +98,21 @@ class Authenticator(Generic[models.UP, models.ID, models.AP]):
                 active=active,
                 verified=verified,
                 superuser=superuser,
+                authorized=authorized,
+                ignore_expired=ignore_expired,
                 **kwargs,
             )
 
         return current_user_token_dependency
 
-    def current_user(  # type: ignore
+    def current_user(  # type: ignore  # noqa: PLR0913
         self,
         optional: bool = False,
         active: bool = False,
         verified: bool = False,
         superuser: bool = False,
         authorized: bool = True,
+        ignore_expired: bool = False,
         get_enabled_backends: EnabledBackendsDependency[models.UP, models.ID, models.AP] | None = None,
     ):
         """
@@ -143,13 +147,14 @@ class Authenticator(Generic[models.UP, models.ID, models.AP]):
                 verified=verified,
                 superuser=superuser,
                 authorized=authorized,
+                ignore_expired=ignore_expired,
                 **kwargs,
             )
             return user
 
         return current_user_dependency
 
-    async def _authenticate(
+    async def _authenticate(  # noqa: PLR0913
         self,
         *args: Any,
         user_manager: BaseUserManager[models.UP, models.ID],
@@ -158,6 +163,7 @@ class Authenticator(Generic[models.UP, models.ID, models.AP]):
         verified: bool = False,
         superuser: bool = False,
         authorized: bool = False,
+        ignore_expired: bool = False,
         **kwargs: Any,
     ) -> tuple[models.UP | None, str | None]:
         user: models.UP | None = None
@@ -175,7 +181,9 @@ class Authenticator(Generic[models.UP, models.ID, models.AP]):
                     name_to_strategy_variable_name(backend.name)
                 ]
                 if token is not None:
-                    user = await strategy.read_token(token=token, user_manager=user_manager, authorized=authorized)
+                    user = await strategy.read_token(
+                        token=token, user_manager=user_manager, authorized=authorized, ignore_expired=ignore_expired
+                    )
                     if user:
                         break
 

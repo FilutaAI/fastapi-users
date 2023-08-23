@@ -43,18 +43,14 @@ class AuthenticationBackend(Generic[models.UP, models.ID, models.AP]):
         pass
 
     async def login(
-        self,
-        strategy: Strategy[models.UP, models.ID, models.AP],
-        user: models.UP,
+        self, strategy: Strategy[models.UP, models.ID, models.AP], user: models.UP, refresh_token: str
     ) -> Response:
         record = await strategy.write_token(user)
-        return await self.transport.get_login_response(record)
+        return await self.transport.get_login_response(record, refresh_token)
 
-    async def logout(
-        self, strategy: Strategy[models.UP, models.ID, models.AP], user: models.UP, token: str
-    ) -> Response:
+    async def logout(self, strategy: Strategy[models.UP, models.ID, models.AP], token: str) -> Response:
         try:
-            await strategy.destroy_token(token, user)
+            await strategy.destroy_token(token)
         except StrategyDestroyNotSupportedError:
             pass
 
