@@ -1,6 +1,6 @@
 {
   "template": "git@github.com:FilutaAI/python-project-template.git",
-  "commit": "283929a422f0ed589f90dbfa5be59368e6f380e6",
+  "commit": "9293c03b4926ccec3ae2087a1f784ef80b69786a",
   "checkout": null,
   "context": {
     "cookiecutter": {
