@@ -1,7 +1,10 @@
 -e .
+artifacts-keyring
 black
+build
 cruft
 ipython
+keyring
 mypy
 pre-commit
 pytest
@@ -13,3 +16,4 @@ sphinx-autobuild
 sphinx-copybutton
 sphinx-rtd-theme
 tox
+twine
