@@ -84,7 +84,7 @@ def get_users_router(  # noqa: C901
         user_manager: BaseUserManager[models.UP, models.ID] = Depends(get_user_manager),
     ) -> schemas.U:
         try:
-            user = await user_manager.update(user_update, user, safe=True, request=request)
+            user = await user_manager.update(user_update, user, True, request)
             return schemas.model_validate(user_schema, user)
         except exceptions.InvalidPasswordException as e:
             raise HTTPException(
@@ -166,7 +166,7 @@ def get_users_router(  # noqa: C901
         user_manager: BaseUserManager[models.UP, models.ID] = Depends(get_user_manager),
     ) -> schemas.U:
         try:
-            user = await user_manager.update(user_update, user, safe=False, request=request)
+            user = await user_manager.update(user_update, user, False, request)
             return schemas.model_validate(user_schema, user)
         except exceptions.InvalidPasswordException as e:
             raise HTTPException(
@@ -205,6 +205,6 @@ def get_users_router(  # noqa: C901
         user: models.UP = Depends(get_user_or_404),
         user_manager: BaseUserManager[models.UP, models.ID] = Depends(get_user_manager),
     ) -> None:
-        await user_manager.delete(user, request=request)
+        await user_manager.delete(user, request)
 
     return router

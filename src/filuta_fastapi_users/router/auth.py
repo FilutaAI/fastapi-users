@@ -73,9 +73,9 @@ def get_auth_router(
                 detail=ErrorCode.LOGIN_USER_NOT_VERIFIED,
             )
 
-        refresh_token_record = await refresh_token_manager.generate_new_token_for_user(user=user)
+        refresh_token_record = await refresh_token_manager.generate_new_token_for_user(user)
         refresh_token = refresh_token_record.token
-        response = await backend.login(strategy=strategy, user=user, refresh_token=refresh_token)
+        response = await backend.login(strategy, user, refresh_token)
 
         await user_manager.on_after_login(user, request, response)
         return response
@@ -108,7 +108,7 @@ def get_auth_router(
         refresh_token = jsonBody.refresh_token
 
         refresh_token_record = await refresh_token_manager.find_refresh_token(
-            refresh_token=refresh_token, lifetime_seconds=refresh_token_lifetime_seconds
+            refresh_token, refresh_token_lifetime_seconds
         )
 
         if not refresh_token_record:

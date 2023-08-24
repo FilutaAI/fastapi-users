@@ -58,21 +58,15 @@ def get_otp_router(  # noqa: C901
             token_mfas = access_token_record.mfa_scopes
 
         if "email" in token_mfas and target_mfa_verification == "email":
-            already_obtained = await otp_manager.user_has_issued_token(
-                access_token=token, mfa_type=target_mfa_verification
-            )
+            already_obtained = await otp_manager.user_has_issued_token(token, target_mfa_verification)
             otp_token = otp_manager.generate_otp_token()
 
             if already_obtained:
-                await otp_manager.delete_record(otp_record=already_obtained)
+                await otp_manager.delete_record(already_obtained)
 
-            otp_token_record = await otp_manager.create_otp_token(
-                access_token=token, mfa_token=otp_token, mfa_type="email"
-            )
+            otp_token_record = await otp_manager.create_otp_token(token, otp_token, "email")
 
-            await user_manager.on_after_otp_email_created(
-                user=user, access_token_record=access_token_record, otp_token_record=otp_token_record
-            )
+            await user_manager.on_after_otp_email_created(user, access_token_record, otp_token_record)
             return OtpResponse(status=True, message="E-mail was sent")
 
         """ todo as feature """

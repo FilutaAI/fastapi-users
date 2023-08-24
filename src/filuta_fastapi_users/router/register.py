@@ -49,7 +49,7 @@ def get_register_router(
         user_manager: BaseUserManager[models.UP, models.ID] = Depends(get_user_manager),
     ) -> schemas.U:
         try:
-            created_user = await user_manager.create(user_create, safe=True, request=request)
+            created_user = await user_manager.create(user_create, True, request)
         except exceptions.UserAlreadyExists:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,

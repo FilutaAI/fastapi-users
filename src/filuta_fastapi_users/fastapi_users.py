@@ -64,9 +64,7 @@ class FastAPIUsers(Generic[models.UP, models.ID, models.AP]):
         :param user_schema: Pydantic schema of a public user.
         :param user_create_schema: Pydantic schema for creating a user.
         """
-        return get_register_router(
-            get_user_manager=self.get_user_manager, user_schema=user_schema, user_create_schema=user_create_schema
-        )
+        return get_register_router(self.get_user_manager, user_schema, user_create_schema)
 
     def get_verify_router(self, user_schema: type[schemas.U]) -> APIRouter:
         """
@@ -74,11 +72,11 @@ class FastAPIUsers(Generic[models.UP, models.ID, models.AP]):
 
         :param user_schema: Pydantic schema of a public user.
         """
-        return get_verify_router(get_user_manager=self.get_user_manager, user_schema=user_schema)
+        return get_verify_router(self.get_user_manager, user_schema)
 
     def get_reset_password_router(self) -> APIRouter:
         """Return a reset password process router."""
-        return get_reset_password_router(get_user_manager=self.get_user_manager)
+        return get_reset_password_router(self.get_user_manager)
 
     def get_auth_router(self, backend: AuthenticationBackend[models.UP, models.ID, models.AP]) -> APIRouter:
         """
@@ -88,12 +86,12 @@ class FastAPIUsers(Generic[models.UP, models.ID, models.AP]):
         require the user to be verified or not. Defaults to False.
         """
         return get_auth_router(
-            backend=backend,
-            get_user_manager=self.get_user_manager,
-            get_refresh_token_manager=self.get_refresh_token_manager,
-            authenticator=self.authenticator,
-            requires_verification=self.requires_verification,
-            refresh_token_lifetime_seconds=self.refresh_token_lifetime_seconds,
+            backend,
+            self.get_user_manager,
+            self.authenticator,
+            self.get_refresh_token_manager,
+            self.requires_verification,
+            self.refresh_token_lifetime_seconds,
         )
 
     def get_otp_router(self, backend: AuthenticationBackend[models.UP, models.ID, models.AP]) -> APIRouter:
@@ -104,11 +102,11 @@ class FastAPIUsers(Generic[models.UP, models.ID, models.AP]):
         require the user to be verified or not. Defaults to False.
         """
         return get_otp_router(
-            backend=backend,
-            get_user_manager=self.get_user_manager,
-            authenticator=self.authenticator,
-            get_otp_manager=self.get_otp_manager,
-            requires_verification=self.requires_verification,
+            backend,
+            self.get_user_manager,
+            self.authenticator,
+            self.get_otp_manager,
+            self.requires_verification,
         )
 
     def get_oauth_router(

@@ -27,9 +27,7 @@ class DatabaseStrategy(Strategy[models.UP, models.ID, models.AP], Generic[models
         if self.lifetime_seconds:
             max_age = datetime.now(UTC) - timedelta(seconds=self.lifetime_seconds)
 
-        access_token = await self.access_token_db.get_by_token(
-            token=token, max_age=max_age, authorized=authorized, ignore_expired=ignore_expired
-        )
+        access_token = await self.access_token_db.get_by_token(token, max_age, authorized, ignore_expired)
         if access_token is None:
             return None
 
@@ -67,7 +65,7 @@ class DatabaseStrategy(Strategy[models.UP, models.ID, models.AP], Generic[models
         return access_token
 
     async def update_token(self, access_token: models.AP, data: dict[str, Any]) -> models.AP:
-        access_token = await self.access_token_db.update(access_token=access_token, update_dict=data)
+        access_token = await self.access_token_db.update(access_token, data)
         return access_token
 
     async def destroy_token(self, token: str) -> None:
