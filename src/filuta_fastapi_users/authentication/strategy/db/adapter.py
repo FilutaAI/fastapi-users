@@ -29,6 +29,10 @@ class AccessTokenDatabase(Protocol, Generic[models.AP]):
         """Delete an access token."""
         ...  # pragma: no cover
 
+    async def delete_all_records_for_user(self, user: models.UP) -> None:
+        """Delete all tokens for a given user"""
+        ...  # pragma: no cover
+
 
 class RefreshTokenDatabase(Protocol, Generic[models.RTP]):
     """Protocol for retrieving, creating and updating refresh tokens from a database."""
@@ -47,6 +51,10 @@ class RefreshTokenDatabase(Protocol, Generic[models.RTP]):
 
     async def delete(self, refresh_token: models.RTP) -> None:
         """Delete an refresh token."""
+        ...  # pragma: no cover
+
+    async def delete_all_records_for_user(self, user: models.UP) -> None:
+        """Delete all tokens for a given user"""
         ...  # pragma: no cover
 
 

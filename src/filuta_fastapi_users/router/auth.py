@@ -104,7 +104,7 @@ def get_auth_router(
         refresh_token_manager: RefreshTokenManager[models.RTP] = Depends(get_refresh_token_manager),
         user_token: tuple[models.UP, str] = Depends(get_current_user_to_renew_token),
     ) -> JSONResponse:
-        user, token = user_token
+        _, token = user_token
         refresh_token = jsonBody.refresh_token
 
         refresh_token_record = await refresh_token_manager.find_refresh_token(

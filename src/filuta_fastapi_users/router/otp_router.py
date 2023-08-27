@@ -93,17 +93,14 @@ def get_otp_router(  # noqa: C901
         request: Request,
         jsonBody: ValidateOtpTokenRequestBody,
         user_token: tuple[models.UP, str] = Depends(get_current_user_token),
-        user_manager: BaseUserManager[models.UP, models.ID] = Depends(get_user_manager),
         otp_manager: OtpManager[models.OTPTP] = Depends(get_otp_manager),
         strategy: Strategy[models.UP, models.ID, models.AP] = Depends(backend.get_strategy),
     ) -> OtpResponse:
-        user, token = user_token
+        _, token = user_token
         mfa_token = jsonBody.code
         mfa_type = jsonBody.type
 
-        otp_record = await otp_manager.find_otp_token(
-            access_token=token, mfa_type=mfa_type, mfa_token=mfa_token, only_valid=True
-        )
+        otp_record = await otp_manager.find_otp_token(token, mfa_type, mfa_token, only_valid=True)
 
         if otp_record:
             token_record = await strategy.get_token_record(token=token)
@@ -118,9 +115,7 @@ def get_otp_router(  # noqa: C901
             else:
                 scopes = "none"
 
-            new_token = await strategy.update_token(
-                access_token=token_record, data={"mfa_scopes": token_mfa_scopes, "scopes": scopes}
-            )
+            new_token = await strategy.update_token(token_record, {"mfa_scopes": token_mfa_scopes, "scopes": scopes})
             await otp_manager.delete_record(otp_record=otp_record)
 
             return OtpResponse(status=True, message="Approved", access_token=new_token)

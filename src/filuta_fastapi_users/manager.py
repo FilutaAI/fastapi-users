@@ -1,4 +1,5 @@
 import uuid
+from abc import ABCMeta, abstractmethod
 from typing import Any, Generic
 
 import jwt
@@ -6,6 +7,7 @@ from fastapi import Request, Response
 from fastapi.security import OAuth2PasswordRequestForm
 
 from filuta_fastapi_users import exceptions, models, schemas
+from filuta_fastapi_users.authentication.strategy.db.adapter import AccessTokenDatabase, RefreshTokenDatabase
 from filuta_fastapi_users.db import BaseUserDatabase
 from filuta_fastapi_users.jwt import SecretType, decode_jwt, generate_jwt
 from filuta_fastapi_users.password import PasswordHelper, PasswordHelperProtocol
@@ -15,7 +17,7 @@ RESET_PASSWORD_TOKEN_AUDIENCE = "fastapi-users:reset"  # nosec B105
 VERIFY_USER_TOKEN_AUDIENCE = "fastapi-users:verify"  # nosec B105
 
 
-class BaseUserManager(Generic[models.UP, models.ID]):
+class BaseUserManager(Generic[models.UP, models.ID], ABCMeta):
     """
     User management logic.
 
@@ -37,20 +39,24 @@ class BaseUserManager(Generic[models.UP, models.ID]):
     verification_token_lifetime_seconds: int = 3600
     verification_token_audience: str = VERIFY_USER_TOKEN_AUDIENCE
 
-    user_db: BaseUserDatabase[models.UP, models.ID]
     password_helper: PasswordHelperProtocol
 
     def __init__(
         self,
         user_db: BaseUserDatabase[models.UP, models.ID],
+        access_token_db: AccessTokenDatabase[models.AP],
+        refresh_token_db: RefreshTokenDatabase[models.RTP],
         password_helper: PasswordHelperProtocol | None = None,
     ):
         self.user_db = user_db
+        self.access_token_db = access_token_db
+        self.refresh_token_db = refresh_token_db
         if password_helper is None:
             self.password_helper = PasswordHelper()
         else:
             self.password_helper = password_helper  # pragma: no cover
 
+    @abstractmethod
     def parse_id(self, value: Any) -> models.ID:
         """
         Parse a value into a correct models.ID instance.
@@ -419,6 +425,7 @@ class BaseUserManager(Generic[models.UP, models.ID]):
         updated_user = await self._update(user, {"password": password})
 
         await self.on_after_reset_password(user, request)
+        await self.delete_user_tokens(user)
 
         return updated_user
 
@@ -650,6 +657,10 @@ class BaseUserManager(Generic[models.UP, models.ID]):
             else:
                 validated_update_dict[field] = value
         return await self.user_db.update(user, validated_update_dict)
+
+    async def delete_user_tokens(self, user: models.UP) -> None:
+        await self.access_token_db.delete_all_records_for_user(user)
+        await self.refresh_token_db.delete_all_records_for_user(user)
 
 
 class UUIDIDMixin:

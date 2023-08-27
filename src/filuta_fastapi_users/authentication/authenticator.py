@@ -181,9 +181,7 @@ class Authenticator(Generic[models.UP, models.ID, models.AP]):
                     name_to_strategy_variable_name(backend.name)
                 ]
                 if token is not None:
-                    user = await strategy.read_token(
-                        token=token, user_manager=user_manager, authorized=authorized, ignore_expired=ignore_expired
-                    )
+                    user = await strategy.read_token(token, user_manager, authorized, ignore_expired)
                     if user:
                         break
 
@@ -200,7 +198,7 @@ class Authenticator(Generic[models.UP, models.ID, models.AP]):
                 detail = "no-verified"
             elif superuser and not user.is_superuser:
                 user = None
-                detail = "no-superuser"
+                detail = "no-permissions"
         if not user and not optional:
             raise HTTPException(status_code=status_code, detail=detail)
         return user, token
