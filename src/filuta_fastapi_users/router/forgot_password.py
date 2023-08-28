@@ -4,7 +4,7 @@ from pydantic import EmailStr
 from filuta_fastapi_users import exceptions, models
 from filuta_fastapi_users.manager import BaseUserManager, UserManagerDependency
 
-def get_reset_password_router(
+def get_forgot_password_router(
     get_user_manager: UserManagerDependency[models.UP, models.ID],
 ) -> APIRouter:
     """Generate a router with the reset password routes."""

@@ -16,6 +16,7 @@ from filuta_fastapi_users.router import (
     get_users_router,
     get_verify_router,
 )
+from filuta_fastapi_users.router.forgot_password import get_forgot_password_router
 
 try:
     from httpx_oauth.oauth2 import BaseOAuth2
@@ -77,6 +78,10 @@ class FastAPIUsers(Generic[models.UP, models.ID, models.AP]):
     def get_reset_password_router(self) -> APIRouter:
         """Return a reset password process router."""
         return get_reset_password_router(self.get_user_manager)
+
+    def get_forgot_password_router(self) -> APIRouter:
+        """Return a reset password process router."""
+        return get_forgot_password_router(self.get_user_manager)
 
     def get_auth_router(self, backend: AuthenticationBackend[models.UP, models.ID, models.AP]) -> APIRouter:
         """

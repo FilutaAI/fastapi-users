@@ -29,21 +29,6 @@ def get_users_router(  # noqa: C901
         except (exceptions.UserNotExists, exceptions.InvalidID) as e:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND) from e
 
-    @router.get(
-        "/me",
-        response_model=user_schema,
-        name="users:current_user",
-        responses={
-            status.HTTP_401_UNAUTHORIZED: {
-                "description": "Missing token or inactive user.",
-            },
-        },
-    )
-    async def me(
-        user: models.UP = Depends(get_current_active_user),
-    ) -> schemas.U:
-        return schemas.model_validate(user_schema, user)
-
     @router.patch(
         "/me",
         response_model=user_schema,
