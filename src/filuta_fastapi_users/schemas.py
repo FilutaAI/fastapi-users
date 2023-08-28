@@ -105,3 +105,8 @@ class BaseOAuthAccountMixin(BaseModel):
     """Adds OAuth accounts list to a User model."""
 
     oauth_accounts: list[BaseOAuthAccount] = []  # type: ignore
+
+
+class ValidateLoginRequestBody(BaseModel):
+    username: str
+    password: str

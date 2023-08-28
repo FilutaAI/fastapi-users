@@ -1,6 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from fastapi.responses import JSONResponse
-from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel
 
 from filuta_fastapi_users import models
@@ -14,6 +13,7 @@ from filuta_fastapi_users.authentication import (
 from filuta_fastapi_users.manager import BaseUserManager, UserManagerDependency
 from filuta_fastapi_users.openapi import OpenAPIResponseType
 from filuta_fastapi_users.router.common import ErrorCode, ErrorModel
+from filuta_fastapi_users.schemas import ValidateLoginRequestBody
 
 
 def get_auth_router(
@@ -55,12 +55,12 @@ def get_auth_router(
     )
     async def login(
         request: Request,
-        credentials: OAuth2PasswordRequestForm = Depends(),
+        jsonBody: ValidateLoginRequestBody,
         user_manager: BaseUserManager[models.UP, models.ID] = Depends(get_user_manager),
         strategy: Strategy[models.UP, models.ID, models.AP] = Depends(backend.get_strategy),
         refresh_token_manager: RefreshTokenManager[models.RTP] = Depends(get_refresh_token_manager),
     ) -> Response:
-        user = await user_manager.authenticate(credentials)
+        user = await user_manager.authenticate(jsonBody)
 
         if user is None or not user.is_active:
             raise HTTPException(
