@@ -1,5 +1,5 @@
 import uuid
-from abc import ABCMeta, abstractmethod
+from abc import ABC, abstractmethod
 from typing import Any, Generic
 
 import jwt
@@ -17,7 +17,7 @@ RESET_PASSWORD_TOKEN_AUDIENCE = "fastapi-users:reset"  # nosec B105
 VERIFY_USER_TOKEN_AUDIENCE = "fastapi-users:verify"  # nosec B105
 
 
-class BaseUserManager(Generic[models.UP, models.ID], ABCMeta):
+class BaseUserManager(ABC, Generic[models.UP, models.ID]):
     """
     User management logic.
 
