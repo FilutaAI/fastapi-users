@@ -37,7 +37,7 @@ def get_otp_router(  # noqa: C901
         type: str
 
     @router.post(
-        "/otp/send_token",
+        "/otp/send-token",
         response_model=OtpResponse,
         name=f"auth:{backend.name}.send_otp_token",
         dependencies=[Depends(get_current_active_user)],
@@ -84,7 +84,7 @@ def get_otp_router(  # noqa: C901
         type: str
 
     @router.post(
-        "/otp/validate_token",
+        "/otp/validate-token",
         response_model=OtpResponse,
         name=f"auth:{backend.name}.validate_otp_token",
         dependencies=[Depends(get_current_active_user)],
