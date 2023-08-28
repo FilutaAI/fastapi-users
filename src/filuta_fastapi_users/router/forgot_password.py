@@ -1,8 +1,9 @@
-from fastapi import APIRouter, Body, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Body, Depends, Request, status
 from pydantic import EmailStr
 
 from filuta_fastapi_users import exceptions, models
 from filuta_fastapi_users.manager import BaseUserManager, UserManagerDependency
+
 
 def get_forgot_password_router(
     get_user_manager: UserManagerDependency[models.UP, models.ID],
