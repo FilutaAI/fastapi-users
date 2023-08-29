@@ -24,7 +24,7 @@ class RefreshTokenManager(Generic[models.RTP]):
 
     async def find_refresh_token(self, refresh_token: str, lifetime_seconds: int | None = None) -> models.RTP | None:
         max_age = None
-        if lifetime_seconds:
+        if lifetime_seconds is not None:
             max_age = datetime.now(UTC) - timedelta(seconds=lifetime_seconds)
 
         return await self.refresh_token_db.get_by_token(refresh_token, max_age)

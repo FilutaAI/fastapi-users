@@ -61,7 +61,7 @@ def get_otp_router(  # noqa: C901
             already_obtained = await otp_manager.user_has_issued_token(token, target_mfa_verification)
             otp_token = otp_manager.generate_otp_token()
 
-            if already_obtained:
+            if already_obtained is not None:
                 await otp_manager.delete_record(already_obtained)
 
             otp_token_record = await otp_manager.create_otp_token(token, otp_token, "email")
@@ -102,7 +102,7 @@ def get_otp_router(  # noqa: C901
 
         otp_record = await otp_manager.find_otp_token(token, mfa_type, mfa_token, only_valid=True)
 
-        if otp_record:
+        if otp_record is not None:
             token_record = await strategy.get_token_record(token=token)
             if token_record is None:
                 return OtpResponse(status=False, error="no-token")

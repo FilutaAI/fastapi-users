@@ -111,7 +111,7 @@ def get_auth_router(
             refresh_token, refresh_token_lifetime_seconds
         )
 
-        if not refresh_token_record:
+        if refresh_token_record is None:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=ErrorCode.RENEW_WRONG_REFRESH_TOKEN,
@@ -119,7 +119,7 @@ def get_auth_router(
 
         old_token_record = await strategy.get_token_record_raw(token)
 
-        if not old_token_record:
+        if old_token_record is None:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=ErrorCode.RENEW_WRONG_ACCESS_TOKEN,
@@ -134,8 +134,8 @@ def get_auth_router(
 
         new_token_record = await strategy.insert_token(new_access_token_record)
 
-        if new_token_record:
-            await strategy.destroy_token(token=old_token_record.token)
+        if new_token_record is not None:
+            await strategy.destroy_token(old_token_record.token)
 
         return JSONResponse({"access_token": new_token_record.token})
 

@@ -182,11 +182,11 @@ class Authenticator(Generic[models.UP, models.ID, models.AP]):
                 ]
                 if token is not None:
                     user = await strategy.read_token(token, user_manager, authorized, ignore_expired)
-                    if user:
+                    if user is not None:
                         break
 
         status_code = status.HTTP_401_UNAUTHORIZED
-        if user:
+        if user is not None:
             status_code = status.HTTP_403_FORBIDDEN
             detail = "no-reason"
             if active and not user.is_active:
@@ -199,7 +199,7 @@ class Authenticator(Generic[models.UP, models.ID, models.AP]):
             elif superuser and not user.is_superuser:
                 user = None
                 detail = "no-permissions"
-        if not user and not optional:
+        if user is None and not optional:
             raise HTTPException(status_code=status_code, detail=detail)
         return user, token
 
