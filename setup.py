@@ -29,7 +29,7 @@ setuptools.setup(
         "pyjwt[crypto] ==2.8.0",
         "python-multipart ==0.0.6",
         "makefun >=1.11.2,<2.0.0",
-        "pydantic<2",
+        "pydantic<3",
         "python-dotenv",
         "sqlalchemy",
     ],
