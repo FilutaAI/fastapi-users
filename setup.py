@@ -25,7 +25,7 @@ setuptools.setup(
     install_requires=[
         "fastapi >=0.65.2",
         "passlib[bcrypt] ==1.7.4",
-        "email-validator >=1.1.0,<2.1",
+        "email-validator >=1.1.0,<2.3",
         "pyjwt[crypto] ==2.8.0",
         "python-multipart ==0.0.9",
         "makefun >=1.11.2,<2.0.0",
