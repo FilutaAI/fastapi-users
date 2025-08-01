@@ -67,7 +67,7 @@ def get_otp_router(  # noqa: C901
             otp_token_record = await otp_manager.create_otp_token(token, otp_token, "email")
 
             await user_manager.on_after_otp_email_created(user, access_token_record, otp_token_record)
-            return OtpResponse(status=True, message="E-mail was sent")
+            return OtpResponse(status=True, message="E-mail was sent")  #  type: ignore[call-arg]
 
         """ todo as feature """
         if "sms" in token_mfas and target_mfa_verification == "sms":
@@ -77,7 +77,7 @@ def get_otp_router(  # noqa: C901
         if "authenticator" in token_mfas and target_mfa_verification == "authenticator":
             pass
 
-        return OtpResponse(status=False, error="No MFA")
+        return OtpResponse(status=False, error="No MFA")  #  type: ignore[call-arg]
 
     class ValidateOtpTokenRequestBody(BaseModel):
         code: str
@@ -105,7 +105,7 @@ def get_otp_router(  # noqa: C901
         if otp_record is not None:
             token_record = await strategy.get_token_record(token=token)
             if token_record is None:
-                return OtpResponse(status=False, error="no-token")
+                return OtpResponse(status=False, error="no-token")  #  type: ignore[call-arg]
 
             token_mfa_scopes = copy.deepcopy(token_record.mfa_scopes)
             token_mfa_scopes[mfa_type] = 1
@@ -118,8 +118,8 @@ def get_otp_router(  # noqa: C901
             new_token = await strategy.update_token(token_record, {"mfa_scopes": token_mfa_scopes, "scopes": scopes})
             await otp_manager.delete_record(otp_record=otp_record)
 
-            return OtpResponse(status=True, message="Approved", access_token=new_token)
+            return OtpResponse(status=True, message="Approved", access_token=new_token)  #  type: ignore[call-arg]
 
-        return OtpResponse(status=False, error="no-token")
+        return OtpResponse(status=False, error="no-token")  #  type: ignore[call-arg]
 
     return router

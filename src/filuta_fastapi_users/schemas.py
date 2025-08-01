@@ -12,10 +12,10 @@ SCHEMA = TypeVar("SCHEMA", bound=BaseModel)
 if PYDANTIC_V2:  # pragma: no cover
 
     def model_dump(model: BaseModel, *args: Any, **kwargs: Any) -> dict[str, Any]:
-        return model.model_dump(*args, **kwargs)  # type: ignore
+        return model.model_dump(*args, **kwargs)
 
     def model_validate(schema: type[SCHEMA], obj: Any, *args: Any, **kwargs: Any) -> SCHEMA:
-        return schema.model_validate(obj, *args, **kwargs)  # type: ignore
+        return schema.model_validate(obj, *args, **kwargs)
 
 else:  # pragma: no cover
 
@@ -56,7 +56,7 @@ class BaseUser(CreateUpdateDictModel, Generic[models.ID]):
     is_verified: bool = False
 
     if PYDANTIC_V2:  # pragma: no cover
-        model_config = ConfigDict(from_attributes=True)  # type: ignore
+        model_config = ConfigDict(from_attributes=True)
     else:  # pragma: no cover
 
         class Config:
@@ -98,7 +98,7 @@ class BaseOAuthAccount(BaseModel, Generic[models.ID]):
     account_email: str
 
     if PYDANTIC_V2:  # pragma: no cover
-        model_config = ConfigDict(from_attributes=True)  # type: ignore
+        model_config = ConfigDict(from_attributes=True)
     else:  # pragma: no cover
 
         class Config:
