@@ -1,4 +1,5 @@
 -e .
+setuptools
 artifacts-keyring
 black
 build
