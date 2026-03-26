@@ -1,5 +1,6 @@
 import secrets
 from typing import Protocol
+
 from passlib.context import CryptContext
 
 
