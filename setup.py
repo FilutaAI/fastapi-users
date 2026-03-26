@@ -32,8 +32,6 @@ setuptools.setup(
         "pydantic>=2.0.0,<3.0.0",
         "python-dotenv",
         "sqlalchemy",
-        "setuptools",
-        "httpx_oauth >=0.13.0",
     ],
     classifiers=[
         "License :: OSI Approved :: MIT License",
