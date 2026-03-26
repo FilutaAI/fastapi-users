@@ -8,3 +8,4 @@ pyjwt[crypto]==2.10.1
 python-dotenv==1.0.0
 python-multipart==0.0.22
 sqlalchemy==2.0.20
+setuptools
