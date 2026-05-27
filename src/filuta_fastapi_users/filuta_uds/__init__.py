@@ -1,4 +1,5 @@
 """FastAPI Users database adapter for SQLAlchemy."""
+
 import uuid
 from typing import TYPE_CHECKING, Any, Generic
 

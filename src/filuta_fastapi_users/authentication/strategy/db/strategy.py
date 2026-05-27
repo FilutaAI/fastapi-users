@@ -34,7 +34,7 @@ class DatabaseStrategy(Strategy[models.UP, models.ID, models.AP], Generic[models
         try:
             parsed_id = user_manager.parse_id(access_token.user_id)
             return await user_manager.get(parsed_id)
-        except (exceptions.UserNotExists, exceptions.InvalidID):
+        except exceptions.UserNotExists, exceptions.InvalidID:
             return None
 
     async def get_token_record(self, token: str | None) -> models.AP | None:

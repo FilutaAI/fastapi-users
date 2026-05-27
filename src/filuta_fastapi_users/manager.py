@@ -149,7 +149,7 @@ class BaseUserManager(ABC, Generic[models.UP, models.ID]):
         return created_user
 
     async def oauth_callback(  # noqa: PLR0913
-        self: "BaseUserManager[models.UOAP, models.ID]",
+        self: BaseUserManager[models.UOAP, models.ID],
         oauth_name: str,
         access_token: str,
         account_id: str,
@@ -228,7 +228,7 @@ class BaseUserManager(ABC, Generic[models.UP, models.ID]):
         return user
 
     async def oauth_associate_callback(  # noqa: PLR0913
-        self: "BaseUserManager[models.UOAP, models.ID]",
+        self: BaseUserManager[models.UOAP, models.ID],
         user: models.UOAP,
         oauth_name: str,
         access_token: str,

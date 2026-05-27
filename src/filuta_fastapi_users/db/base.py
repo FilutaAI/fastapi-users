@@ -31,12 +31,12 @@ class BaseUserDatabase(Generic[UP, ID]):
         """Delete a user."""
         raise NotImplementedError()
 
-    async def add_oauth_account(self: "BaseUserDatabase[UOAP, ID]", user: UOAP, create_dict: dict[str, Any]) -> UOAP:
+    async def add_oauth_account(self: BaseUserDatabase[UOAP, ID], user: UOAP, create_dict: dict[str, Any]) -> UOAP:
         """Create an OAuth account and add it to the user."""
         raise NotImplementedError()
 
     async def update_oauth_account(
-        self: "BaseUserDatabase[UOAP, ID]",
+        self: BaseUserDatabase[UOAP, ID],
         user: UOAP,
         oauth_account: OAP,
         update_dict: dict[str, Any],

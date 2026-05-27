@@ -14,11 +14,9 @@ class TransportLogoutNotSupportedError(Exception):
 class Transport(Protocol):
     scheme: SecurityBase
 
-    async def get_login_response(self, record: models.AP, refresh_token: str) -> Response:
-        ...  # pragma: no cover
+    async def get_login_response(self, record: models.AP, refresh_token: str) -> Response: ...  # pragma: no cover
 
-    async def get_logout_response(self) -> Response:
-        ...  # pragma: no cover
+    async def get_logout_response(self) -> Response: ...  # pragma: no cover
 
     @staticmethod
     def get_openapi_login_responses_success() -> OpenAPIResponseType:
