@@ -14,9 +14,9 @@ from filuta_fastapi_users.jwt import SecretType, decode_jwt, generate_jwt
 from filuta_fastapi_users.manager import BaseUserManager, UserManagerDependency
 from filuta_fastapi_users.router.common import ErrorCode, ErrorModel
 
-STATE_TOKEN_AUDIENCE = "fastapi-users:oauth-state"
-CSRF_TOKEN_KEY = "csrftoken"
-CSRF_TOKEN_COOKIE_NAME = "fastapiusersoauthcsrf"
+STATE_TOKEN_AUDIENCE = "fastapi-users:oauth-state"  # nosec B105
+CSRF_TOKEN_KEY = "csrftoken"  # nosec B105
+CSRF_TOKEN_COOKIE_NAME = "fastapiusersoauthcsrf"  # nosec B105
 
 
 class OAuth2AuthorizeResponse(BaseModel):

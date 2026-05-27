@@ -27,7 +27,7 @@ try:
     )
 except ModuleNotFoundError:  # pragma: no cover
     BaseOAuth2 = type  # type: ignore
-    CSRF_TOKEN_COOKIE_NAME = ""  # type: ignore
+    CSRF_TOKEN_COOKIE_NAME = ""  # type: ignore # nosec B105
 
 
 class FastAPIUsers(Generic[models.UP, models.ID, models.AP]):
@@ -181,7 +181,7 @@ class FastAPIUsers(Generic[models.UP, models.ID, models.AP]):
         redirect_url: str | None = None,
         requires_verification: bool = False,
         csrf_token_cookie_name: str = CSRF_TOKEN_COOKIE_NAME,
-        csrf_token_cookie_path: str = "/",
+        csrf_token_cookie_path: str = "/",  # nosec B107
         csrf_token_cookie_domain: str | None = None,
         csrf_token_cookie_secure: bool = True,
         csrf_token_cookie_httponly: bool = True,

@@ -46,12 +46,12 @@ class BearerTransport(Transport):
                 "content": {
                     "application/json": {
                         "example": {
-                            "access_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1"
+                            "access_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1"  # nosec B105
                             "c2VyX2lkIjoiOTIyMWZmYzktNjQwZi00MzcyLTg2Z"
                             "DMtY2U2NDJjYmE1NjAzIiwiYXVkIjoiZmFzdGFwaS"
                             "11c2VyczphdXRoIiwiZXhwIjoxNTcxNTA0MTkzfQ."
                             "M10bjOe45I5Ncu_uXvOmVV8QxnL-nZfcH96U90JaocI",
-                            "token_type": "bearer",
+                            "token_type": "bearer",  # nosec B105
                         }
                     }
                 },
