@@ -1,11 +1,13 @@
 import secrets
 from typing import Protocol
 
-from passlib.context import CryptContext
+from pwdlib import PasswordHash
+from pwdlib.hashers.argon2 import Argon2Hasher
+from pwdlib.hashers.bcrypt import BcryptHasher
 
 
 class PasswordHelperProtocol(Protocol):
-    def verify_and_update(self, plain_password: str, hashed_password: str) -> tuple[bool, str]:
+    def verify_and_update(self, plain_password: str, hashed_password: str) -> tuple[bool, str | None]:
         ...  # pragma: no cover
 
     def hash(self, password: str) -> str:
@@ -16,17 +18,22 @@ class PasswordHelperProtocol(Protocol):
 
 
 class PasswordHelper(PasswordHelperProtocol):
-    def __init__(self, context: CryptContext | None = None) -> None:
-        if context is None:
-            self.context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+    def __init__(self, password_hash: PasswordHash | None = None) -> None:
+        if password_hash is None:
+            self.password_hash = PasswordHash(
+                (
+                    Argon2Hasher(),
+                    BcryptHasher(),
+                )
+            )
         else:
-            self.context = context  # pragma: no cover
+            self.password_hash = password_hash  # pragma: no cover
 
-    def verify_and_update(self, plain_password: str, hashed_password: str) -> tuple[bool, str]:
-        return self.context.verify_and_update(plain_password, hashed_password)
+    def verify_and_update(self, plain_password: str, hashed_password: str) -> tuple[bool, str | None]:
+        return self.password_hash.verify_and_update(plain_password, hashed_password)
 
     def hash(self, password: str) -> str:
-        return self.context.hash(password)
+        return self.password_hash.hash(password)
 
     def generate(self) -> str:
         return secrets.token_urlsafe(32)

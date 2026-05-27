@@ -6,7 +6,7 @@ def test_import() -> None:
 
 
 def test_version() -> None:
-    assert __version__ == "12.1.1+11"
+    assert __version__ == "15.0.5+1"
 
 
 def test_global_fixture(dummy_fixture: int) -> None:

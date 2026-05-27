@@ -67,7 +67,7 @@ class Authenticator(Generic[models.UP, models.ID, models.AP]):
         authorized: bool = True,
         ignore_expired: bool = False,
         get_enabled_backends: EnabledBackendsDependency[models.UP, models.ID, models.AP] | None = None,
-    ) -> Callable[[Any], tuple[models.UP | None, str | None]]:
+    ):
         """
         Return a dependency callable to retrieve currently authenticated user and token.
 
@@ -77,7 +77,7 @@ class Authenticator(Generic[models.UP, models.ID, models.AP]):
         Otherwise, an exception is raised. Defaults to `False`.
         :param active: If `True`, throw `401 Unauthorized` if
         the authenticated user is inactive. Defaults to `False`.
-        :param verified: If `True`, throw `401 Unauthorized` if
+        :param verified: If `True`, throw `403 Forbidden` if
         the authenticated user is not verified. Defaults to `False`.
         :param superuser: If `True`, throw `403 Forbidden` if
         the authenticated user is not a superuser. Defaults to `False`.
@@ -92,7 +92,7 @@ class Authenticator(Generic[models.UP, models.ID, models.AP]):
         signature = self._get_dependency_signature(get_enabled_backends)
 
         @with_signature(signature)
-        async def current_user_token_dependency(*args, **kwargs) -> tuple[models.UP | None, str | None]:  # type: ignore
+        async def current_user_token_dependency(*args: Any, **kwargs: Any):
             return await self._authenticate(
                 *args,
                 optional=optional,
@@ -127,7 +127,7 @@ class Authenticator(Generic[models.UP, models.ID, models.AP]):
         Otherwise, an exception is raised. Defaults to `False`.
         :param active: If `True`, throw `401 Unauthorized` if
         the authenticated user is inactive. Defaults to `False`.
-        :param verified: If `True`, throw `401 Unauthorized` if
+        :param verified: If `True`, throw `403 Forbidden` if
         the authenticated user is not verified. Defaults to `False`.
         :param superuser: If `True`, throw `403 Forbidden` if
         the authenticated user is not a superuser. Defaults to `False`.
@@ -142,7 +142,7 @@ class Authenticator(Generic[models.UP, models.ID, models.AP]):
         signature = self._get_dependency_signature(get_enabled_backends)
 
         @with_signature(signature)
-        async def current_user_dependency(*args, **kwargs):  # type: ignore
+        async def current_user_dependency(*args: Any, **kwargs: Any):
             user, _ = await self._authenticate(
                 *args,
                 optional=optional,
@@ -212,7 +212,8 @@ class Authenticator(Generic[models.UP, models.ID, models.AP]):
         return user, token
 
     def _get_dependency_signature(
-        self, get_enabled_backends: EnabledBackendsDependency[models.UP, models.ID, models.AP] | None = None
+        self,
+        get_enabled_backends: EnabledBackendsDependency[models.UP, models.ID, models.AP] | None = None,
     ) -> Signature:
         """
         Generate a dynamic signature for the current_user dependency.

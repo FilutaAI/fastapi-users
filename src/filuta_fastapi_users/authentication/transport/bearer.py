@@ -9,7 +9,6 @@ from filuta_fastapi_users.authentication.transport.base import (
     TransportLogoutNotSupportedError,
 )
 from filuta_fastapi_users.openapi import OpenAPIResponseType
-from filuta_fastapi_users.schemas import model_dump
 
 
 class BearerResponse(BaseModel):
@@ -34,7 +33,7 @@ class BearerTransport(Transport):
             mfa_scopes=record.mfa_scopes,
             refresh_token=refresh_token,  # nosec B106
         )
-        return JSONResponse(model_dump(bearer_response))
+        return JSONResponse(bearer_response.model_dump())
 
     async def get_logout_response(self) -> Response:
         raise TransportLogoutNotSupportedError()

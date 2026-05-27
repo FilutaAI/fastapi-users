@@ -1,35 +1,15 @@
-from typing import Any, Generic, TypeVar
+from typing import Generic, TypeVar
 
 from pydantic import BaseModel, ConfigDict, EmailStr
-from pydantic.version import VERSION as PYDANTIC_VERSION
 
 from filuta_fastapi_users import models
 
-PYDANTIC_V2 = PYDANTIC_VERSION.startswith("2.")
-
 SCHEMA = TypeVar("SCHEMA", bound=BaseModel)
-
-if PYDANTIC_V2:  # pragma: no cover
-
-    def model_dump(model: BaseModel, *args: Any, **kwargs: Any) -> dict[str, Any]:
-        return model.model_dump(*args, **kwargs)
-
-    def model_validate(schema: type[SCHEMA], obj: Any, *args: Any, **kwargs: Any) -> SCHEMA:
-        return schema.model_validate(obj, *args, **kwargs)
-
-else:  # pragma: no cover
-
-    def model_dump(model: BaseModel, *args: Any, **kwargs: Any) -> dict[str, Any]:
-        return model.dict(*args, **kwargs)
-
-    def model_validate(schema: type[SCHEMA], obj: Any, *args: Any, **kwargs: Any) -> SCHEMA:
-        return schema.from_orm(obj)
 
 
 class CreateUpdateDictModel(BaseModel):
-    def create_update_dict(self) -> dict[str, Any]:
-        return model_dump(
-            self,
+    def create_update_dict(self):
+        return self.model_dump(
             exclude_unset=True,
             exclude={
                 "id",
@@ -41,8 +21,8 @@ class CreateUpdateDictModel(BaseModel):
             },
         )
 
-    def create_update_dict_superuser(self) -> dict[str, Any]:
-        return model_dump(self, exclude_unset=True, exclude={"id"})
+    def create_update_dict_superuser(self):
+        return self.model_dump(exclude_unset=True, exclude={"id"})
 
 
 class BaseUser(CreateUpdateDictModel, Generic[models.ID]):
@@ -55,12 +35,7 @@ class BaseUser(CreateUpdateDictModel, Generic[models.ID]):
     is_poweruser: bool = False
     is_verified: bool = False
 
-    if PYDANTIC_V2:  # pragma: no cover
-        model_config = ConfigDict(from_attributes=True)
-    else:  # pragma: no cover
-
-        class Config:
-            orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class BaseUserCreate(CreateUpdateDictModel):
@@ -97,18 +72,13 @@ class BaseOAuthAccount(BaseModel, Generic[models.ID]):
     account_id: str
     account_email: str
 
-    if PYDANTIC_V2:  # pragma: no cover
-        model_config = ConfigDict(from_attributes=True)
-    else:  # pragma: no cover
-
-        class Config:
-            orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class BaseOAuthAccountMixin(BaseModel):
     """Adds OAuth accounts list to a User model."""
 
-    oauth_accounts: list[BaseOAuthAccount] = []  # type: ignore
+    oauth_accounts: list[BaseOAuthAccount] = []
 
 
 class ValidateLoginRequestBody(BaseModel):
