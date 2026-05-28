@@ -33,10 +33,12 @@ dev = [
     "cruft>=2.16.0",
     "mypy>=2.1.0",
     "pre-commit>=4.6.0",
+    "coverage>=7.14.1",
     "pytest>=9.0.3",
+    "pytest-cov>=7.1.0",
     "pytest-env>=1.6.0",
-    "ruff>=0.15.14",
-    "tox>=4.54.0",
+    "ruff>=0.15.15",
+    "tox>=4.55.0",
     "twine>=6.2.0",
 ]
 
@@ -60,6 +62,8 @@ env = [
 
 addopts = [
     "-v",
+    "--cov=filuta_fastapi_users",
+    "--cov-report=term-missing",
 ]
 
 [tool.mypy]
