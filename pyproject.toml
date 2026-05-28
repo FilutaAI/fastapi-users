@@ -23,7 +23,7 @@ dependencies = [
     "pyjwt[crypto]>=2.13.0",
     "python-multipart>=0.0.29",
     "makefun>=1.16.0",
-    "pydantic>=2.13.4",
+    "pydantic[email]>=2.13.4",
 ]
 
 [project.optional-dependencies]
