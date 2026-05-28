@@ -1,4 +1,4 @@
-from enum import Enum
+from enum import StrEnum
 
 from pydantic import BaseModel
 
@@ -12,7 +12,7 @@ class ErrorCodeReasonModel(BaseModel):
     reason: str
 
 
-class ErrorCode(str, Enum):
+class ErrorCode(StrEnum):
     REGISTER_INVALID_PASSWORD = "REGISTER_INVALID_PASSWORD"  # nosec B105
     REGISTER_USER_ALREADY_EXISTS = "REGISTER_USER_ALREADY_EXISTS"
     OAUTH_NOT_AVAILABLE_EMAIL = "OAUTH_NOT_AVAILABLE_EMAIL"

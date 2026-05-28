@@ -1,14 +1,12 @@
-from typing import Generic, TypeVar
+from typing import Any, TypeVar
 
 from pydantic import BaseModel, ConfigDict, EmailStr
-
-from filuta_fastapi_users import models
 
 SCHEMA = TypeVar("SCHEMA", bound=BaseModel)
 
 
 class CreateUpdateDictModel(BaseModel):
-    def create_update_dict(self):
+    def create_update_dict(self) -> dict[str, Any]:
         return self.model_dump(
             exclude_unset=True,
             exclude={
@@ -21,14 +19,14 @@ class CreateUpdateDictModel(BaseModel):
             },
         )
 
-    def create_update_dict_superuser(self):
+    def create_update_dict_superuser(self) -> dict[str, Any]:
         return self.model_dump(exclude_unset=True, exclude={"id"})
 
 
-class BaseUser(CreateUpdateDictModel, Generic[models.ID]):
+class BaseUser(CreateUpdateDictModel):
     """Base User model."""
 
-    id: models.ID
+    id: Any
     email: EmailStr
     is_active: bool = True
     is_superuser: bool = False
@@ -56,15 +54,15 @@ class BaseUserUpdate(CreateUpdateDictModel):
     is_verified: bool | None = None
 
 
-U = TypeVar("U", bound=BaseUser)  # type: ignore
+U = TypeVar("U", bound=BaseUser)
 UC = TypeVar("UC", bound=BaseUserCreate)
 UU = TypeVar("UU", bound=BaseUserUpdate)
 
 
-class BaseOAuthAccount(BaseModel, Generic[models.ID]):
+class BaseOAuthAccount(BaseModel):
     """Base OAuth account model."""
 
-    id: models.ID
+    id: Any
     oauth_name: str
     access_token: str
     expires_at: int | None = None

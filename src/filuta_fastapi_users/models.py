@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Generic, Protocol, TypeVar
+from typing import Any, Protocol, TypeVar
 
 ID = TypeVar("ID")
 
@@ -28,11 +28,11 @@ class OAuthAccountProtocol(Protocol[ID]):
     account_email: str
 
 
-UP = TypeVar("UP", bound=UserProtocol)  # type: ignore
-OAP = TypeVar("OAP", bound=OAuthAccountProtocol)  # type: ignore
+UP = TypeVar("UP", bound="UserProtocol[Any]")
+OAP = TypeVar("OAP", bound="OAuthAccountProtocol[Any]")
 
 
-class UserOAuthProtocol(UserProtocol[ID], Generic[ID, OAP]):
+class UserOAuthProtocol[ID, OAP: "OAuthAccountProtocol[Any]"](UserProtocol[ID]):
     """User protocol including a list of OAuth accounts."""
 
     id: ID
@@ -45,7 +45,7 @@ class UserOAuthProtocol(UserProtocol[ID], Generic[ID, OAP]):
     oauth_accounts: list[OAP]
 
 
-UOAP = TypeVar("UOAP", bound=UserOAuthProtocol)  # type: ignore
+UOAP = TypeVar("UOAP", bound="UserOAuthProtocol[Any, Any]")
 
 
 class AccessTokenProtocol(Protocol[ID]):
@@ -58,7 +58,7 @@ class AccessTokenProtocol(Protocol[ID]):
     mfa_scopes: dict[str, int]
 
 
-AP = TypeVar("AP", bound=AccessTokenProtocol)  # type: ignore
+AP = TypeVar("AP", bound="AccessTokenProtocol[Any]")
 
 
 class RefreshTokenProtocol(Protocol[ID]):
@@ -69,7 +69,7 @@ class RefreshTokenProtocol(Protocol[ID]):
     created_at: datetime
 
 
-RTP = TypeVar("RTP", bound=RefreshTokenProtocol)  # type: ignore
+RTP = TypeVar("RTP", bound="RefreshTokenProtocol[Any]")
 
 
 class OtpTokenProtocol(Protocol):

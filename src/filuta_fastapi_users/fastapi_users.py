@@ -1,5 +1,5 @@
 from collections.abc import Sequence
-from typing import Any, Generic, Literal
+from typing import Any, Literal
 
 from fastapi import APIRouter
 
@@ -26,11 +26,11 @@ try:
         get_oauth_router,
     )
 except ModuleNotFoundError:  # pragma: no cover
-    BaseOAuth2 = type  # type: ignore
-    CSRF_TOKEN_COOKIE_NAME = ""  # type: ignore # nosec B105
+    BaseOAuth2 = type
+    CSRF_TOKEN_COOKIE_NAME = ""  # nosec B105
 
 
-class FastAPIUsers(Generic[models.UP, models.ID, models.AP]):
+class FastAPIUsers[UP: "models.UserProtocol[Any]", ID, AP: "models.AccessTokenProtocol[Any]"]:
     """
     Main object that ties together the component for users authentication.
 
@@ -42,12 +42,12 @@ class FastAPIUsers(Generic[models.UP, models.ID, models.AP]):
     with a specific set of parameters.
     """
 
-    authenticator: Authenticator[models.UP, models.ID, models.AP]
+    authenticator: Authenticator[UP, ID, AP]
 
     def __init__(
         self,
-        get_user_manager: UserManagerDependency[models.UP, models.ID],
-        auth_backends: Sequence[AuthenticationBackend[models.UP, models.ID, models.AP]],
+        get_user_manager: UserManagerDependency[UP, ID],
+        auth_backends: Sequence[AuthenticationBackend[UP, ID, AP]],
         get_refresh_token_manager: Any,
         get_otp_manager: OtpManagerDependency[models.OTPTP],
         requires_verification: bool = False,
@@ -84,7 +84,7 @@ class FastAPIUsers(Generic[models.UP, models.ID, models.AP]):
 
     def get_auth_router(
         self,
-        backend: AuthenticationBackend[models.UP, models.ID, models.AP],
+        backend: AuthenticationBackend[UP, ID, AP],
         requires_verification: bool = False,
     ) -> APIRouter:
         """
@@ -103,7 +103,7 @@ class FastAPIUsers(Generic[models.UP, models.ID, models.AP]):
             self.refresh_token_lifetime_seconds,
         )
 
-    def get_otp_router(self, backend: AuthenticationBackend[models.UP, models.ID, models.AP]) -> APIRouter:
+    def get_otp_router(self, backend: AuthenticationBackend[UP, ID, AP]) -> APIRouter:
         """
         Return an auth router for a given authentication backend.
 
@@ -121,7 +121,7 @@ class FastAPIUsers(Generic[models.UP, models.ID, models.AP]):
     def get_oauth_router(
         self,
         oauth_client: BaseOAuth2,
-        backend: AuthenticationBackend[models.UP, models.ID, models.AP],
+        backend: AuthenticationBackend[UP, ID, AP],
         state_secret: SecretType,
         redirect_url: str | None = None,
         associate_by_email: bool = False,

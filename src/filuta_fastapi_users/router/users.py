@@ -102,7 +102,7 @@ def get_users_router(  # noqa: C901
             },
         },
     )
-    async def get_user(user=Depends(get_user_or_404)):
+    async def get_user(user: models.UP = Depends(get_user_or_404)) -> schemas.U:
         return user_schema.model_validate(user)
 
     @router.patch(

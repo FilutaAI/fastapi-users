@@ -17,7 +17,7 @@ RESET_PASSWORD_TOKEN_AUDIENCE = "fastapi-users:reset"  # nosec B105
 VERIFY_USER_TOKEN_AUDIENCE = "fastapi-users:verify"  # nosec B105
 
 
-class BaseUserManager(ABC, Generic[models.UP, models.ID]):
+class BaseUserManager(Generic[models.UP, models.ID], ABC):  # noqa: UP046
     """
     User management logic.
 

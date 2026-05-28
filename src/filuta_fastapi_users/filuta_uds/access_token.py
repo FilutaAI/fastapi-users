@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime
-from typing import TYPE_CHECKING, Any, Generic
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from sqlalchemy import JSON, ForeignKey, String, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -12,17 +12,17 @@ from filuta_fastapi_users.authentication import AccessTokenDatabase
 from .generics import GUID, TIMESTAMPAware, now_utc
 
 
-class SQLAlchemyBaseAccessTokenTable(Generic[models.ID]):
+class SQLAlchemyBaseAccessTokenTable[ID]:
     """Base SQLAlchemy access token table definition."""
 
     __tablename__ = "access_tokens"
 
     if TYPE_CHECKING:  # pragma: no cover
-        token: str
-        created_at: datetime
-        scopes: str
-        mfa_scopes: dict[str, int]
-        user_id: models.ID
+        token: ClassVar[str]
+        created_at: ClassVar[datetime]
+        scopes: ClassVar[str]
+        mfa_scopes: ClassVar[dict[str, int]]
+        user_id: ID
     else:
         token = mapped_column(String(length=43), primary_key=True)
         scopes = mapped_column(String(length=255))
@@ -40,7 +40,7 @@ class SQLAlchemyBaseAccessTokenTableUUID(SQLAlchemyBaseAccessTokenTable[uuid.UUI
             return mapped_column(GUID, ForeignKey("user.id", ondelete="cascade"), nullable=False)
 
 
-class SQLAlchemyAccessTokenDatabase(Generic[models.AP], AccessTokenDatabase[models.AP]):
+class SQLAlchemyAccessTokenDatabase[AP](AccessTokenDatabase[AP]):
     """
     Access token database adapter for SQLAlchemy.
 
@@ -51,7 +51,7 @@ class SQLAlchemyAccessTokenDatabase(Generic[models.AP], AccessTokenDatabase[mode
     def __init__(
         self,
         session: AsyncSession,
-        access_token_table: type[models.AP],
+        access_token_table: type[AP],
     ):
         self.session = session
         self.access_token_table = access_token_table
@@ -62,28 +62,28 @@ class SQLAlchemyAccessTokenDatabase(Generic[models.AP], AccessTokenDatabase[mode
         max_age: datetime | None = None,
         authorized: bool = False,
         ignore_expired: bool = False,
-    ) -> models.AP | None:
-        statement = select(self.access_token_table).where(self.access_token_table.token == token)
+    ) -> AP | None:
+        statement = select(self.access_token_table).where(self.access_token_table.token == token)  # type: ignore[attr-defined]
 
         if ignore_expired:
             max_age = None
         if max_age is not None:
-            statement = statement.where(self.access_token_table.created_at >= max_age)
+            statement = statement.where(self.access_token_table.created_at >= max_age)  # type: ignore[attr-defined]
 
         if authorized:
-            statement = statement.where(self.access_token_table.scopes == "approved")
+            statement = statement.where(self.access_token_table.scopes == "approved")  # type: ignore[attr-defined]
 
         results = await self.session.execute(statement)
         return results.scalar_one_or_none()
 
-    async def create(self, create_dict: dict[str, Any]) -> models.AP:
+    async def create(self, create_dict: dict[str, Any]) -> AP:
         access_token = self.access_token_table(**create_dict)
         self.session.add(access_token)
         await self.session.commit()
         await self.session.refresh(access_token)
         return access_token
 
-    async def update(self, access_token: models.AP, update_dict: dict[str, Any]) -> models.AP:
+    async def update(self, access_token: AP, update_dict: dict[str, Any]) -> AP:
         for key, value in update_dict.items():
             setattr(access_token, key, value)
 
@@ -93,12 +93,12 @@ class SQLAlchemyAccessTokenDatabase(Generic[models.AP], AccessTokenDatabase[mode
         await self.session.refresh(access_token)
         return access_token
 
-    async def delete(self, access_token: models.AP) -> None:
+    async def delete(self, access_token: AP) -> None:
         await self.session.delete(access_token)
         await self.session.commit()
 
     async def delete_all_records_for_user(self, user: models.UP) -> None:
-        statement = select(self.access_token_table).where(self.access_token_table.user_id == user.id)
+        statement = select(self.access_token_table).where(self.access_token_table.user_id == user.id)  # type: ignore[attr-defined]
         results = await self.session.execute(statement)
         tokens = results.scalars().all()
 
@@ -107,10 +107,10 @@ class SQLAlchemyAccessTokenDatabase(Generic[models.AP], AccessTokenDatabase[mode
 
         await self.session.commit()
 
-    async def get_latest_token_for_user(self, user: models.UP) -> models.AP:
+    async def get_latest_token_for_user(self, user: models.UP) -> AP:
         results = await self.session.execute(
             select(self.access_token_table)
-            .where(self.access_token_table.user_id == user.id)
+            .where(self.access_token_table.user_id == user.id)  # type: ignore[attr-defined]
             .order_by(self.access_token_table.created_at.desc())  # type: ignore
             .limit(1)
         )

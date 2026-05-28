@@ -1,10 +1,10 @@
-from typing import Any, Generic
+from typing import Any
 
 from filuta_fastapi_users.models import ID, OAP, UOAP, UP
 from filuta_fastapi_users.types import DependencyCallable
 
 
-class BaseUserDatabase(Generic[UP, ID]):
+class BaseUserDatabase[UP, ID]:
     """Base adapter for retrieving, creating and updating users from a database."""
 
     async def get(self, id: ID) -> UP | None:

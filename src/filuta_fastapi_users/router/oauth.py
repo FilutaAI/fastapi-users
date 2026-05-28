@@ -32,7 +32,7 @@ def generate_csrf_token() -> str:
     return secrets.token_urlsafe(32)
 
 
-def get_oauth_router(
+def get_oauth_router(  # noqa: C901
     oauth_client: BaseOAuth2,
     backend: AuthenticationBackend[models.UP, models.ID, models.AP],
     get_user_manager: UserManagerDependency[models.UP, models.ID],

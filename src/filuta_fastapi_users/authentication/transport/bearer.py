@@ -1,3 +1,5 @@
+from typing import Any
+
 from fastapi import Response, status
 from fastapi.responses import JSONResponse
 from fastapi.security import OAuth2PasswordBearer
@@ -19,13 +21,13 @@ class BearerResponse(BaseModel):
     mfa_scopes: dict[str, int]
 
 
-class BearerTransport(Transport):
+class BearerTransport[AP: "models.AccessTokenProtocol[Any]"](Transport[AP]):
     scheme: OAuth2PasswordBearer
 
     def __init__(self, tokenUrl: str):
         self.scheme = OAuth2PasswordBearer(tokenUrl, auto_error=False)
 
-    async def get_login_response(self, record: models.AP, refresh_token: str) -> Response:
+    async def get_login_response(self, record: AP, refresh_token: str) -> Response:
         bearer_response = BearerResponse(
             access_token=record.token,
             token_type="bearer",

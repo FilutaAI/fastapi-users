@@ -1,7 +1,7 @@
 """FastAPI Users database adapter for SQLAlchemy."""
 
 import uuid
-from typing import TYPE_CHECKING, Any, Generic
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import Boolean, ForeignKey, Integer, String, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -18,13 +18,13 @@ __version__ = "6.0.1"
 UUID_ID = uuid.UUID
 
 
-class SQLAlchemyBaseUserTable(Generic[models.ID]):
+class SQLAlchemyBaseUserTable[ID]:
     """Base SQLAlchemy users table definition."""
 
     __tablename__ = "user"
 
     if TYPE_CHECKING:  # pragma: no cover
-        id: models.ID
+        id: ID
         email: str
         hashed_password: str
         is_active: bool
@@ -47,13 +47,13 @@ class SQLAlchemyBaseUserTableUUID(SQLAlchemyBaseUserTable[UUID_ID]):
         id: Mapped[UUID_ID] = mapped_column(GUID, primary_key=True, default=uuid.uuid4)
 
 
-class SQLAlchemyBaseOAuthAccountTable(Generic[models.ID]):
+class SQLAlchemyBaseOAuthAccountTable[ID]:
     """Base SQLAlchemy OAuth account table definition."""
 
     __tablename__ = "oauth_account"
 
     if TYPE_CHECKING:  # pragma: no cover
-        id: models.ID
+        id: ID
         oauth_name: str
         access_token: str
         expires_at: int | None
@@ -81,7 +81,11 @@ class SQLAlchemyBaseOAuthAccountTableUUID(SQLAlchemyBaseOAuthAccountTable[UUID_I
             return mapped_column(GUID, ForeignKey("user.id", ondelete="cascade"), nullable=False)
 
 
-class SQLAlchemyUserDatabase(Generic[models.UOAP, models.ID], BaseUserDatabase[models.UOAP, models.ID]):
+class SQLAlchemyUserDatabase[
+    UOAP: "models.UserOAuthProtocol[Any, Any]",
+    ID,
+    OAP: "models.OAuthAccountProtocol[Any]",
+](BaseUserDatabase[UOAP, ID]):
     """
     Database adapter for SQLAlchemy.
 
@@ -91,28 +95,28 @@ class SQLAlchemyUserDatabase(Generic[models.UOAP, models.ID], BaseUserDatabase[m
     """
 
     session: AsyncSession
-    user_table: type[models.UOAP]
+    user_table: type[UOAP]
     oauth_account_table: type[SQLAlchemyBaseOAuthAccountTable[uuid.UUID]] | None
 
     def __init__(
         self,
         session: AsyncSession,
-        user_table: type[models.UOAP],
+        user_table: type[UOAP],
         oauth_account_table: type[SQLAlchemyBaseOAuthAccountTable[uuid.UUID]] | None = None,
     ):
         self.session = session
         self.user_table = user_table
         self.oauth_account_table = oauth_account_table
 
-    async def get(self, id: models.ID) -> models.UOAP | None:
+    async def get(self, id: ID) -> UOAP | None:
         statement = select(self.user_table).where(self.user_table.id == id)
         return await self._get_user(statement)
 
-    async def get_by_email(self, email: str) -> models.UOAP | None:
+    async def get_by_email(self, email: str) -> UOAP | None:
         statement = select(self.user_table).where(func.lower(self.user_table.email) == func.lower(email))
         return await self._get_user(statement)
 
-    async def get_by_oauth_account(self, oauth: str, account_id: str) -> models.UOAP | None:
+    async def get_by_oauth_account(self, oauth: str, account_id: str) -> UOAP | None:
         if self.oauth_account_table is None:
             raise NotImplementedError()
 
@@ -124,14 +128,14 @@ class SQLAlchemyUserDatabase(Generic[models.UOAP, models.ID], BaseUserDatabase[m
         )
         return await self._get_user(statement)
 
-    async def create(self, create_dict: dict[str, Any]) -> models.UOAP:
+    async def create(self, create_dict: dict[str, Any]) -> UOAP:
         user = self.user_table(**create_dict)
         self.session.add(user)
         await self.session.commit()
         await self.session.refresh(user)
         return user
 
-    async def update(self, user: models.UOAP, update_dict: dict[str, Any]) -> models.UOAP:
+    async def update(self, user: UOAP, update_dict: dict[str, Any]) -> UOAP:
         for key, value in update_dict.items():
             setattr(user, key, value)
         self.session.add(user)
@@ -139,11 +143,11 @@ class SQLAlchemyUserDatabase(Generic[models.UOAP, models.ID], BaseUserDatabase[m
         await self.session.refresh(user)
         return user
 
-    async def delete(self, user: models.UOAP) -> None:
+    async def delete(self, user: UOAP) -> None:
         await self.session.delete(user)
         await self.session.commit()
 
-    async def add_oauth_account(self, user: models.UOAP, create_dict: dict[str, Any]) -> models.UOAP:
+    async def add_oauth_account(self, user: UOAP, create_dict: dict[str, Any]) -> UOAP:
         if self.oauth_account_table is None:
             raise NotImplementedError()
 
@@ -157,9 +161,7 @@ class SQLAlchemyUserDatabase(Generic[models.UOAP, models.ID], BaseUserDatabase[m
 
         return user
 
-    async def update_oauth_account(
-        self, user: models.UOAP, oauth_account: models.OAP, update_dict: dict[str, Any]
-    ) -> models.UOAP:
+    async def update_oauth_account(self, user: UOAP, oauth_account: OAP, update_dict: dict[str, Any]) -> UOAP:  # type: ignore[override]
         if self.oauth_account_table is None:
             raise NotImplementedError()
 
@@ -170,6 +172,6 @@ class SQLAlchemyUserDatabase(Generic[models.UOAP, models.ID], BaseUserDatabase[m
 
         return user
 
-    async def _get_user(self, statement: Select[Any]) -> models.UOAP | None:
+    async def _get_user(self, statement: Select[Any]) -> UOAP | None:
         results = await self.session.execute(statement)
         return results.unique().scalar_one_or_none()

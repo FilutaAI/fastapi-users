@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime
-from typing import TYPE_CHECKING, Any, Generic
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from sqlalchemy import ForeignKey, String, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -12,15 +12,15 @@ from filuta_fastapi_users.authentication import RefreshTokenDatabase
 from .generics import GUID, TIMESTAMPAware, now_utc
 
 
-class SQLAlchemyBaseRefreshTokenTable(Generic[models.ID]):
+class SQLAlchemyBaseRefreshTokenTable[ID]:
     """Base SQLAlchemy refresh token table definition."""
 
     __tablename__ = "refresh_tokens"
 
     if TYPE_CHECKING:  # pragma: no cover
-        user_id: models.ID
-        token: str
-        created_at: datetime
+        user_id: ID
+        token: ClassVar[str]
+        created_at: ClassVar[datetime]
     else:
         token: Mapped[str] = mapped_column(String(length=43), primary_key=True)
         created_at: Mapped[datetime] = mapped_column(
@@ -38,7 +38,7 @@ class SQLAlchemyBaseRefreshTokenTableUUID(SQLAlchemyBaseRefreshTokenTable[uuid.U
             return mapped_column(GUID, ForeignKey("user.id", ondelete="cascade"), nullable=False)
 
 
-class SQLAlchemyRefreshTokenDatabase(Generic[models.AP], RefreshTokenDatabase[models.AP]):
+class SQLAlchemyRefreshTokenDatabase[RTP](RefreshTokenDatabase[RTP]):
     """
     Refresh token database adapter for SQLAlchemy.
 
@@ -49,27 +49,27 @@ class SQLAlchemyRefreshTokenDatabase(Generic[models.AP], RefreshTokenDatabase[mo
     def __init__(
         self,
         session: AsyncSession,
-        refresh_token_table: type[models.AP],
+        refresh_token_table: type[RTP],
     ):
         self.session = session
         self.refresh_token_table = refresh_token_table
 
-    async def get_by_token(self, token: str, max_age: datetime | None = None) -> models.AP | None:
-        statement = select(self.refresh_token_table).where(self.refresh_token_table.token == token)
+    async def get_by_token(self, token: str, max_age: datetime | None = None) -> RTP | None:
+        statement = select(self.refresh_token_table).where(self.refresh_token_table.token == token)  # type: ignore[attr-defined]
         if max_age is not None:
-            statement = statement.where(self.refresh_token_table.created_at >= max_age)
+            statement = statement.where(self.refresh_token_table.created_at >= max_age)  # type: ignore[attr-defined]
 
         results = await self.session.execute(statement)
         return results.scalar_one_or_none()
 
-    async def create(self, create_dict: dict[str, Any]) -> models.AP:
+    async def create(self, create_dict: dict[str, Any]) -> RTP:
         refresh_token = self.refresh_token_table(**create_dict)
         self.session.add(refresh_token)
         await self.session.commit()
         await self.session.refresh(refresh_token)
         return refresh_token
 
-    async def update(self, refresh_token: models.AP, update_dict: dict[str, Any]) -> models.AP:
+    async def update(self, refresh_token: RTP, update_dict: dict[str, Any]) -> RTP:
         for key, value in update_dict.items():
             setattr(refresh_token, key, value)
         self.session.add(refresh_token)
@@ -77,12 +77,12 @@ class SQLAlchemyRefreshTokenDatabase(Generic[models.AP], RefreshTokenDatabase[mo
         await self.session.refresh(refresh_token)
         return refresh_token
 
-    async def delete(self, refresh_token: models.AP) -> None:
+    async def delete(self, refresh_token: RTP) -> None:
         await self.session.delete(refresh_token)
         await self.session.commit()
 
     async def delete_all_records_for_user(self, user: models.UP) -> None:
-        statement = select(self.refresh_token_table).where(self.refresh_token_table.user_id == user.id)
+        statement = select(self.refresh_token_table).where(self.refresh_token_table.user_id == user.id)  # type: ignore[attr-defined]
         results = await self.session.execute(statement)
         tokens = results.scalars().all()
 
