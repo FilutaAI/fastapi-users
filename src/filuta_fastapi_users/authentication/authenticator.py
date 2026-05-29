@@ -1,7 +1,7 @@
 import re
 from collections.abc import Callable, Sequence
 from inspect import Parameter, Signature
-from typing import Any, Generic, cast
+from typing import Any, cast
 
 from fastapi import Depends, HTTPException, status
 from makefun import with_signature
@@ -35,7 +35,7 @@ class DuplicateBackendNamesError(Exception):
 EnabledBackendsDependency = DependencyCallable[Sequence[AuthenticationBackend[models.UP, models.ID, models.AP]]]
 
 
-class Authenticator(Generic[models.UP, models.ID, models.AP]):
+class Authenticator[UP: "models.UserProtocol[Any]", ID, AP: "models.AccessTokenProtocol[Any]"]:
     """
     Provides dependency callables to retrieve authenticated user.
 
@@ -47,17 +47,17 @@ class Authenticator(Generic[models.UP, models.ID, models.AP]):
     :param get_user_manager: User manager dependency callable.
     """
 
-    backends: Sequence[AuthenticationBackend[models.UP, models.ID, models.AP]]
+    backends: Sequence[AuthenticationBackend[UP, ID, AP]]
 
     def __init__(
         self,
-        backends: Sequence[AuthenticationBackend[models.UP, models.ID, models.AP]],
-        get_user_manager: UserManagerDependency[models.UP, models.ID],
+        backends: Sequence[AuthenticationBackend[UP, ID, AP]],
+        get_user_manager: UserManagerDependency[UP, ID],
     ):
         self.backends = backends
         self.get_user_manager = get_user_manager
 
-    def current_user_token(  # noqa: PLR0913
+    def current_user_token(  # type: ignore[no-untyped-def]  # noqa: PLR0913
         self,
         optional: bool = False,
         active: bool = False,
@@ -67,7 +67,7 @@ class Authenticator(Generic[models.UP, models.ID, models.AP]):
         authorized: bool = True,
         ignore_expired: bool = False,
         get_enabled_backends: EnabledBackendsDependency[models.UP, models.ID, models.AP] | None = None,
-    ) -> Callable[[Any], tuple[models.UP | None, str | None]]:
+    ):
         """
         Return a dependency callable to retrieve currently authenticated user and token.
 
@@ -77,7 +77,7 @@ class Authenticator(Generic[models.UP, models.ID, models.AP]):
         Otherwise, an exception is raised. Defaults to `False`.
         :param active: If `True`, throw `401 Unauthorized` if
         the authenticated user is inactive. Defaults to `False`.
-        :param verified: If `True`, throw `401 Unauthorized` if
+        :param verified: If `True`, throw `403 Forbidden` if
         the authenticated user is not verified. Defaults to `False`.
         :param superuser: If `True`, throw `403 Forbidden` if
         the authenticated user is not a superuser. Defaults to `False`.
@@ -89,10 +89,10 @@ class Authenticator(Generic[models.UP, models.ID, models.AP]):
         Please not however that every backends will appear in the OpenAPI documentation,
         as FastAPI resolves it statically.
         """
-        signature = self._get_dependency_signature(get_enabled_backends)
+        signature = self._get_dependency_signature(get_enabled_backends)  # type: ignore[arg-type]
 
         @with_signature(signature)
-        async def current_user_token_dependency(*args, **kwargs) -> tuple[models.UP | None, str | None]:  # type: ignore
+        async def current_user_token_dependency(*args: Any, **kwargs: Any):  # type: ignore[no-untyped-def]
             return await self._authenticate(
                 *args,
                 optional=optional,
@@ -127,7 +127,7 @@ class Authenticator(Generic[models.UP, models.ID, models.AP]):
         Otherwise, an exception is raised. Defaults to `False`.
         :param active: If `True`, throw `401 Unauthorized` if
         the authenticated user is inactive. Defaults to `False`.
-        :param verified: If `True`, throw `401 Unauthorized` if
+        :param verified: If `True`, throw `403 Forbidden` if
         the authenticated user is not verified. Defaults to `False`.
         :param superuser: If `True`, throw `403 Forbidden` if
         the authenticated user is not a superuser. Defaults to `False`.
@@ -139,10 +139,10 @@ class Authenticator(Generic[models.UP, models.ID, models.AP]):
         Please not however that every backends will appear in the OpenAPI documentation,
         as FastAPI resolves it statically.
         """
-        signature = self._get_dependency_signature(get_enabled_backends)
+        signature = self._get_dependency_signature(get_enabled_backends)  # type: ignore[arg-type]
 
         @with_signature(signature)
-        async def current_user_dependency(*args, **kwargs):  # type: ignore
+        async def current_user_dependency(*args: Any, **kwargs: Any):  # type: ignore[no-untyped-def]
             user, _ = await self._authenticate(
                 *args,
                 optional=optional,
@@ -161,7 +161,7 @@ class Authenticator(Generic[models.UP, models.ID, models.AP]):
     async def _authenticate(  # noqa: PLR0913, C901
         self,
         *args: Any,
-        user_manager: BaseUserManager[models.UP, models.ID],
+        user_manager: BaseUserManager[UP, ID],
         optional: bool = False,
         active: bool = False,
         verified: bool = False,
@@ -170,21 +170,17 @@ class Authenticator(Generic[models.UP, models.ID, models.AP]):
         authorized: bool = False,
         ignore_expired: bool = False,
         **kwargs: Any,
-    ) -> tuple[models.UP | None, str | None]:
-        user: models.UP | None = None
+    ) -> tuple[UP | None, str | None]:
+        user: UP | None = None
         token: str | None = None
-        enabled_backends: Sequence[AuthenticationBackend[models.UP, models.ID, models.AP]] = kwargs.get(
-            "enabled_backends", self.backends
-        )
+        enabled_backends: Sequence[AuthenticationBackend[UP, ID, AP]] = kwargs.get("enabled_backends", self.backends)
 
         detail = "no-user"
 
         for backend in self.backends:
             if backend in enabled_backends:
                 token = kwargs[name_to_variable_name(backend.name)]
-                strategy: Strategy[models.UP, models.ID, models.AP] = kwargs[
-                    name_to_strategy_variable_name(backend.name)
-                ]
+                strategy: Strategy[UP, ID, AP] = kwargs[name_to_strategy_variable_name(backend.name)]
                 if token is not None:
                     user = await strategy.read_token(token, user_manager, authorized, ignore_expired)
                     if user is not None:
@@ -212,7 +208,8 @@ class Authenticator(Generic[models.UP, models.ID, models.AP]):
         return user, token
 
     def _get_dependency_signature(
-        self, get_enabled_backends: EnabledBackendsDependency[models.UP, models.ID, models.AP] | None = None
+        self,
+        get_enabled_backends: EnabledBackendsDependency[UP, ID, AP] | None = None,
     ) -> Signature:
         """
         Generate a dynamic signature for the current_user dependency.

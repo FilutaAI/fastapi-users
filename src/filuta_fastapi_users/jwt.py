@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 import jwt
@@ -21,8 +21,8 @@ def generate_jwt(
     algorithm: str = JWT_ALGORITHM,
 ) -> str:
     payload = data.copy()
-    if lifetime_seconds is not None:
-        expire = datetime.utcnow() + timedelta(seconds=lifetime_seconds)
+    if lifetime_seconds:
+        expire = datetime.now(UTC) + timedelta(seconds=lifetime_seconds)
         payload["exp"] = expire
     return jwt.encode(payload, _get_secret_value(secret), algorithm=algorithm)
 

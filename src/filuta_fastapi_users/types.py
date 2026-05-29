@@ -9,7 +9,7 @@ DependencyCallable = Callable[
     ...,
     RETURN_TYPE
     | Coroutine[None, None, RETURN_TYPE]
-    | AsyncGenerator[RETURN_TYPE, None]
-    | Generator[RETURN_TYPE, None, None]
+    | AsyncGenerator[RETURN_TYPE]
+    | Generator[RETURN_TYPE]
     | AsyncIterator[RETURN_TYPE],
 ]

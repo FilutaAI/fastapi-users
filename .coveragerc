@@ -1,4 +1,5 @@
 [run]
+source = src
 omit =
-    setup.py
     venv/*
+    */tests/*

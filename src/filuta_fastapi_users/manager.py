@@ -17,7 +17,7 @@ RESET_PASSWORD_TOKEN_AUDIENCE = "fastapi-users:reset"  # nosec B105
 VERIFY_USER_TOKEN_AUDIENCE = "fastapi-users:verify"  # nosec B105
 
 
-class BaseUserManager(ABC, Generic[models.UP, models.ID]):
+class BaseUserManager(Generic[models.UP, models.ID], ABC):  # noqa: UP046
     """
     User management logic.
 
@@ -63,7 +63,7 @@ class BaseUserManager(ABC, Generic[models.UP, models.ID]):
 
         :param value: The value to parse.
         :raises InvalidID: The models.ID value is invalid.
-        :return: An models.ID object.
+        :return: A models.ID object.
         """
         raise NotImplementedError()  # pragma: no cover
 
@@ -71,9 +71,9 @@ class BaseUserManager(ABC, Generic[models.UP, models.ID]):
         """
         Get a user by id.
 
-        :param id: Id. of the user to retrieve.
+        :param id: Id of the user to retrieve.
         :raises UserNotExists: The user does not exist.
-        :return: A user.
+        :return: A user of type models.UP.
         """
         user = await self.user_db.get(id)
 
@@ -88,7 +88,7 @@ class BaseUserManager(ABC, Generic[models.UP, models.ID]):
 
         :param user_email: E-mail of the user to retrieve.
         :raises UserNotExists: The user does not exist.
-        :return: A user.
+        :return: A user of type models.UP.
         """
         user = await self.user_db.get_by_email(user_email)
 
@@ -102,9 +102,9 @@ class BaseUserManager(ABC, Generic[models.UP, models.ID]):
         Get a user by OAuth account.
 
         :param oauth: Name of the OAuth client.
-        :param account_id: Id. of the account on the external OAuth service.
+        :param account_id: Id of the account on the external OAuth service.
         :raises UserNotExists: The user does not exist.
-        :return: A user.
+        :return: A user of type models.UP.
         """
         user = await self.user_db.get_by_oauth_account(oauth, account_id)
 
@@ -130,7 +130,7 @@ class BaseUserManager(ABC, Generic[models.UP, models.ID]):
         :param request: Optional FastAPI request that
         triggered the operation, defaults to None.
         :raises UserAlreadyExists: A user already exists with the same e-mail.
-        :return: A new user.
+        :return: A new user of type models.UP.
         """
         await self.validate_password(user_create.password, user_create)
 
@@ -149,7 +149,7 @@ class BaseUserManager(ABC, Generic[models.UP, models.ID]):
         return created_user
 
     async def oauth_callback(  # noqa: PLR0913
-        self: "BaseUserManager[models.UOAP, models.ID]",
+        self: BaseUserManager[models.UOAP, models.ID],
         oauth_name: str,
         access_token: str,
         account_id: str,
@@ -175,7 +175,7 @@ class BaseUserManager(ABC, Generic[models.UP, models.ID]):
 
         :param oauth_name: Name of the OAuth client.
         :param access_token: Valid access token for the service provider.
-        :param account_id: models.ID of the user on the service provider.
+        :param account_id: Id of the account on the external OAuth service.
         :param account_email: E-mail of the user on the service provider.
         :param expires_at: Optional timestamp at which the access token expires.
         :param refresh_token: Optional refresh token to get a
@@ -188,7 +188,7 @@ class BaseUserManager(ABC, Generic[models.UP, models.ID]):
         set to `True` on newly created user. Make sure the OAuth Provider you're
         using does verify the email address before enabling this flag.
         Defaults to False.
-        :return: A user.
+        :return: A user of type models.UOAP.
         """
         oauth_account_dict = {
             "oauth_name": oauth_name,
@@ -228,7 +228,7 @@ class BaseUserManager(ABC, Generic[models.UP, models.ID]):
         return user
 
     async def oauth_associate_callback(  # noqa: PLR0913
-        self: "BaseUserManager[models.UOAP, models.ID]",
+        self: BaseUserManager[models.UOAP, models.ID],
         user: models.UOAP,
         oauth_name: str,
         access_token: str,
@@ -245,14 +245,14 @@ class BaseUserManager(ABC, Generic[models.UP, models.ID]):
 
         :param oauth_name: Name of the OAuth client.
         :param access_token: Valid access token for the service provider.
-        :param account_id: models.ID of the user on the service provider.
+        :param account_id: Id of the account on the external OAuth service.
         :param account_email: E-mail of the user on the service provider.
         :param expires_at: Optional timestamp at which the access token expires.
         :param refresh_token: Optional refresh token to get a
         fresh access token from the service provider.
         :param request: Optional FastAPI request that
         triggered the operation, defaults to None
-        :return: A user.
+        :return: A user of type models.UOAP.
         """
         oauth_account_dict = {
             "oauth_name": oauth_name,
@@ -311,7 +311,7 @@ class BaseUserManager(ABC, Generic[models.UP, models.ID]):
         triggered the operation, defaults to None.
         :raises InvalidVerifyToken: The token is invalid or expired.
         :raises UserAlreadyVerified: The user is already verified.
-        :return: The verified user.
+        :return: A verified user of type models.UP.
         """
         try:
             data = decode_jwt(
@@ -389,7 +389,7 @@ class BaseUserManager(ABC, Generic[models.UP, models.ID]):
         :raises InvalidResetPasswordToken: The token is invalid or expired.
         :raises UserInactive: The user is inactive.
         :raises InvalidPasswordException: The password is invalid.
-        :return: The user with updated password.
+        :return: The user of type models.UP with updated password.
         """
         try:
             data = decode_jwt(
@@ -448,7 +448,7 @@ class BaseUserManager(ABC, Generic[models.UP, models.ID]):
         will be ignored during the update, defaults to False
         :param request: Optional FastAPI request that
         triggered the operation, defaults to None.
-        :return: The updated user.
+        :return: The updated user of type models.UP.
         """
         if safe:
             updated_user_data = user_update.create_update_dict()
@@ -487,11 +487,6 @@ class BaseUserManager(ABC, Generic[models.UP, models.ID]):
         """
         return  # pragma: no cover
 
-    async def on_after_otp_email_created(
-        self, user: models.UP, access_token_record: models.AP | None, otp_token_record: models.OTPTP
-    ) -> None:
-        pass
-
     async def on_after_register(self, user: models.UP, request: Request | None = None) -> None:
         """
         Perform logic after successful user registration.
@@ -501,6 +496,23 @@ class BaseUserManager(ABC, Generic[models.UP, models.ID]):
         :param user: The registered user
         :param request: Optional FastAPI request that
         triggered the operation, defaults to None.
+        """
+        return  # pragma: no cover
+
+    async def on_after_otp_email_created(
+        self,
+        user: models.UP,
+        access_token_record: models.AP | None,
+        otp_token_record: models.OTPTP,
+    ) -> None:
+        """
+        Perform logic after successful OTP email token creation.
+
+        *You should overload this method to add your own logic.*
+
+        :param user: The user that is logging in
+        :param access_token_record: The access token record
+        :param otp_token_record: The OTP token record
         """
         return  # pragma: no cover
 
@@ -621,6 +633,8 @@ class BaseUserManager(ABC, Generic[models.UP, models.ID]):
         Will automatically upgrade password hash if necessary.
 
         :param credentials: The user credentials.
+        :return: The authenticated user of type models.UP if credentials are valid,
+        otherwise None.
         """
         try:
             user = await self.get_by_email(credentials.username)
@@ -651,7 +665,7 @@ class BaseUserManager(ABC, Generic[models.UP, models.ID]):
                 except exceptions.UserNotExists:
                     validated_update_dict["email"] = value
                     validated_update_dict["is_verified"] = False
-            elif field == "password":
+            elif field == "password" and value is not None:
                 await self.validate_password(value, user)
                 validated_update_dict["hashed_password"] = self.password_helper.hash(value)
             else:
@@ -664,6 +678,10 @@ class BaseUserManager(ABC, Generic[models.UP, models.ID]):
 
 
 class UUIDIDMixin:
+    """
+    Mixin for parsing and validating Id of type UUID.
+    """
+
     def parse_id(self, value: Any) -> uuid.UUID:
         if isinstance(value, uuid.UUID):
             return value
@@ -674,6 +692,10 @@ class UUIDIDMixin:
 
 
 class IntegerIDMixin:
+    """
+    Mixin for parsing and validating Id of type Integer.
+    """
+
     def parse_id(self, value: Any) -> int:
         if isinstance(value, float):
             raise exceptions.InvalidID()

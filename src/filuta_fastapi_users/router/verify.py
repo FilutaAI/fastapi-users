@@ -44,7 +44,7 @@ def get_verify_router(
                         "examples": {
                             ErrorCode.VERIFY_USER_BAD_TOKEN: {
                                 "summary": "Bad token, not existing user or"
-                                "not the e-mail currently set for the user.",
+                                " not the e-mail currently set for the user.",
                                 "value": {"detail": ErrorCode.VERIFY_USER_BAD_TOKEN},
                             },
                             ErrorCode.VERIFY_USER_ALREADY_VERIFIED: {
@@ -64,8 +64,8 @@ def get_verify_router(
     ) -> schemas.U:
         try:
             user = await user_manager.verify(token, request)
-            return schemas.model_validate(user_schema, user)
-        except (exceptions.InvalidVerifyToken, exceptions.UserNotExists):
+            return user_schema.model_validate(user)
+        except exceptions.InvalidVerifyToken, exceptions.UserNotExists:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=ErrorCode.VERIFY_USER_BAD_TOKEN,

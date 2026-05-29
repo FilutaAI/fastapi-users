@@ -1,4 +1,4 @@
-from typing import Protocol
+from typing import Any, Protocol
 
 from fastapi import Response
 from fastapi.security.base import SecurityBase
@@ -11,14 +11,12 @@ class TransportLogoutNotSupportedError(Exception):
     pass
 
 
-class Transport(Protocol):
+class Transport[AP: "models.AccessTokenProtocol[Any]"](Protocol):
     scheme: SecurityBase
 
-    async def get_login_response(self, record: models.AP, refresh_token: str) -> Response:
-        ...  # pragma: no cover
+    async def get_login_response(self, record: AP, refresh_token: str) -> Response: ...  # pragma: no cover
 
-    async def get_logout_response(self) -> Response:
-        ...  # pragma: no cover
+    async def get_logout_response(self) -> Response: ...  # pragma: no cover
 
     @staticmethod
     def get_openapi_login_responses_success() -> OpenAPIResponseType:

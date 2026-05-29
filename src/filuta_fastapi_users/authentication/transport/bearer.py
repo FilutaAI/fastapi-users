@@ -1,3 +1,5 @@
+from typing import Any
+
 from fastapi import Response, status
 from fastapi.responses import JSONResponse
 from fastapi.security import OAuth2PasswordBearer
@@ -9,7 +11,6 @@ from filuta_fastapi_users.authentication.transport.base import (
     TransportLogoutNotSupportedError,
 )
 from filuta_fastapi_users.openapi import OpenAPIResponseType
-from filuta_fastapi_users.schemas import model_dump
 
 
 class BearerResponse(BaseModel):
@@ -20,13 +21,13 @@ class BearerResponse(BaseModel):
     mfa_scopes: dict[str, int]
 
 
-class BearerTransport(Transport):
+class BearerTransport[AP: "models.AccessTokenProtocol[Any]"](Transport[AP]):
     scheme: OAuth2PasswordBearer
 
     def __init__(self, tokenUrl: str):
         self.scheme = OAuth2PasswordBearer(tokenUrl, auto_error=False)
 
-    async def get_login_response(self, record: models.AP, refresh_token: str) -> Response:
+    async def get_login_response(self, record: AP, refresh_token: str) -> Response:
         bearer_response = BearerResponse(
             access_token=record.token,
             token_type="bearer",
@@ -34,7 +35,7 @@ class BearerTransport(Transport):
             mfa_scopes=record.mfa_scopes,
             refresh_token=refresh_token,  # nosec B106
         )
-        return JSONResponse(model_dump(bearer_response))
+        return JSONResponse(bearer_response.model_dump())
 
     async def get_logout_response(self) -> Response:
         raise TransportLogoutNotSupportedError()
@@ -47,12 +48,12 @@ class BearerTransport(Transport):
                 "content": {
                     "application/json": {
                         "example": {
-                            "access_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1"
+                            "access_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1"  # nosec B105
                             "c2VyX2lkIjoiOTIyMWZmYzktNjQwZi00MzcyLTg2Z"
                             "DMtY2U2NDJjYmE1NjAzIiwiYXVkIjoiZmFzdGFwaS"
                             "11c2VyczphdXRoIiwiZXhwIjoxNTcxNTA0MTkzfQ."
                             "M10bjOe45I5Ncu_uXvOmVV8QxnL-nZfcH96U90JaocI",
-                            "token_type": "bearer",
+                            "token_type": "bearer",  # nosec B105
                         }
                     }
                 },
