@@ -28,6 +28,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
+    "artifacts-keyring>=1.0.0",
     "black>=26.5.1",
     "build>=1.5.0",
     "cruft>=2.16.0",
