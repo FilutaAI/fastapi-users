@@ -2,6 +2,7 @@ import copy
 from typing import Any
 
 from fastapi import APIRouter, Depends, Request
+from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel
 
 from filuta_fastapi_users import models
@@ -118,7 +119,8 @@ def get_otp_router(  # noqa: C901
             new_token = await strategy.update_token(token_record, {"mfa_scopes": token_mfa_scopes, "scopes": scopes})
             await otp_manager.delete_record(otp_record=otp_record)
 
-            return OtpResponse(status=True, message="Approved", access_token=new_token)
+            # the token record is a DB model, which pydantic v2 can't serialize as Any
+            return OtpResponse(status=True, message="Approved", access_token=jsonable_encoder(new_token))
 
         return OtpResponse(status=False, error="no-token")
 

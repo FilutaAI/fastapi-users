@@ -1,6 +1,6 @@
 """Ready-to-use and customizable users management for FastAPI."""
 
-__version__ = "15.0.5+2"
+__version__ = "15.0.5+3"
 
 from filuta_fastapi_users import models, schemas  # noqa: F401
 from filuta_fastapi_users.exceptions import InvalidID, InvalidPasswordException
