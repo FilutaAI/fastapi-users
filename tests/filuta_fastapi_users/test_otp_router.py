@@ -66,15 +66,19 @@ class FakeAuthenticator:
 @pytest.mark.asyncio
 async def test_validate_token_returns_access_token_record_as_json() -> None:
     record = AccessTokenRecord()
+
+    def get_strategy() -> Any:
+        return FakeStrategy(record)
+
     backend: Any = AuthenticationBackend(
-        name="test", transport=BearerTransport(tokenUrl="login"), get_strategy=lambda: FakeStrategy(record)
+        name="test", transport=BearerTransport(tokenUrl="login"), get_strategy=get_strategy
     )
     app = FastAPI()
     app.include_router(
         get_otp_router(
             backend,
             get_user_manager=lambda: None,  # type: ignore[arg-type,return-value]
-            get_otp_manager=lambda: FakeOtpManager(),  # type: ignore[arg-type,return-value]
+            get_otp_manager=FakeOtpManager,  # type: ignore[arg-type]
             authenticator=FakeAuthenticator(),  # type: ignore[arg-type]
         )
     )
